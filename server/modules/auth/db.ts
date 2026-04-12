@@ -17,3 +17,8 @@ export function upsertToken(token: Omit<Token, "id">, db: Database = _db): void 
     [token.access_token, token.refresh_token ?? null, token.expires_at]
   )
 }
+
+/** Removes stored OAuth tokens (sign out). */
+export function clearToken(db: Database = _db): void {
+  db.run("DELETE FROM tokens WHERE id = 1")
+}

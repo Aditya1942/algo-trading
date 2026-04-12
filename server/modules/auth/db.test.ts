@@ -1,6 +1,6 @@
 import { test, expect, beforeEach } from "bun:test"
 import { Database } from "bun:sqlite"
-import { getToken, upsertToken } from "./db"
+import { clearToken, getToken, upsertToken } from "./db"
 
 function makeTestDb(): Database {
   const db = new Database(":memory:")
@@ -46,4 +46,11 @@ test("upsertToken handles null refresh_token", () => {
   upsertToken({ access_token: "tok", refresh_token: null, expires_at: 5000 }, db)
   const t = getToken(db)
   expect(t!.refresh_token).toBeNull()
+})
+
+test("clearToken removes stored token", () => {
+  upsertToken({ access_token: "tok", refresh_token: "ref", expires_at: 5000 }, db)
+  expect(getToken(db)).not.toBeNull()
+  clearToken(db)
+  expect(getToken(db)).toBeNull()
 })

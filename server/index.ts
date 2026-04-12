@@ -1,6 +1,7 @@
 import { config } from "./shared/config"
 import { withHttpLogging } from "./shared/app-logger"
 import { handleLogin, handleCallback } from "./api/auth"
+import { handleLogout } from "./api/logout"
 import { handleGetFundsAndMargin, handleGetProfile } from "./api/user"
 import { handleGetHoldings } from "./api/portfolio"
 import { handleGetOrderHistory } from "./api/orders"
@@ -21,6 +22,8 @@ Bun.serve({
     "/api/v1/order/history":       { GET: L((req) => handleGetOrderHistory(req)) },
 
     // Health (keep for infra checks)
+    "/api/v1/auth/logout": { POST: L(() => handleLogout()) },
+
     "/api/v1/health": {
       GET: L(() => Response.json({ healthy: true })),
     },
