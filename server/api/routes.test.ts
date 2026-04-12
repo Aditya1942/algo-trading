@@ -32,6 +32,25 @@ test("GET /api/v1/user/profile returns 401 when not authenticated", async () => 
   expect(body.error).toBe("not_authenticated")
 })
 
+// --- /api/v1/user/funds-and-margin ---
+test("GET /api/v1/user/funds-and-margin proxies Upstox v3 response", async () => {
+  const fakeData = {
+    status: "success",
+    data: {
+      available_to_trade: { total: 1000 },
+      unavailable_to_trade: {},
+    },
+  }
+  const mockUpstoxGet = mock(() => Promise.resolve(fakeData))
+
+  const { handleGetFundsAndMargin } = await import("./user")
+  const req = new Request("http://localhost:8081/api/v1/user/funds-and-margin")
+  const res = await handleGetFundsAndMargin(req, mockUpstoxGet)
+
+  expect(res.status).toBe(200)
+  expect(await res.json()).toEqual(fakeData)
+})
+
 // --- /api/v1/portfolio/holdings ---
 test("GET /api/v1/portfolio/holdings proxies Upstox response", async () => {
   const fakeData = { status: "success", data: [{ isin: "INE002A01018", quantity: 10 }] }

@@ -8,3 +8,12 @@ export async function handleGetProfile(
 ): Promise<Response> {
   return proxyUpstox(() => upstoxGet("/user/profile"))
 }
+
+export async function handleGetFundsAndMargin(
+  _req: Request,
+  upstoxGet: typeof _upstoxGet = _upstoxGet
+): Promise<Response> {
+  return proxyUpstox(() =>
+    upstoxGet("/user/get-funds-and-margin", undefined, { version: 3 })
+  )
+}

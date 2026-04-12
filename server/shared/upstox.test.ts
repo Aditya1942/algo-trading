@@ -37,6 +37,33 @@ test("upstoxGet returns parsed JSON on success", async () => {
   globalThis.fetch = originalFetch
 })
 
+test("upstoxGet uses v3 URL and Api-Version for version 3", async () => {
+  const mockFetch = mock(() =>
+    Promise.resolve(
+      new Response(JSON.stringify({ status: "success", data: {} }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+  )
+  const mockGetValidToken = mock(() => Promise.resolve("test_access_token"))
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = mockFetch as typeof fetch
+
+  const { upstoxGet } = await import("./upstox")
+  await upstoxGet("/user/get-funds-and-margin", mockGetValidToken, { version: 3 })
+
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+  const callArgs = mockFetch.mock.calls[0] as [string, RequestInit]
+  expect(callArgs[0]).toBe("https://api.upstox.com/v3/user/get-funds-and-margin")
+  const h = callArgs[1]?.headers as Record<string, string>
+  expect(h["Authorization"]).toBe("Bearer test_access_token")
+  expect(h["Accept"]).toBe("application/json")
+  expect(h["Api-Version"]).toBe("3.0")
+
+  globalThis.fetch = originalFetch
+})
+
 test("upstoxGet throws UpstoxError on non-2xx response", async () => {
   const mockFetch = mock(() =>
     Promise.resolve(
