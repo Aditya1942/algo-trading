@@ -67,3 +67,19 @@ test("GET /api/v1/order/history forwards Upstox error status", async () => {
 
   expect(res.status).toBe(403)
 })
+
+// --- proxyUpstox error handling ---
+test("proxyUpstox forwards UpstoxError status and body", async () => {
+  const { proxyUpstox } = await import("./_handle")
+  const res = await proxyUpstox(() => Promise.reject(new UpstoxError(429, { message: "Rate limited" })))
+  expect(res.status).toBe(429)
+  expect(await res.json()).toEqual({ message: "Rate limited" })
+})
+
+test("proxyUpstox returns 500 on unknown error", async () => {
+  const { proxyUpstox } = await import("./_handle")
+  const res = await proxyUpstox(() => Promise.reject(new Error("Something broke")))
+  expect(res.status).toBe(500)
+  const body = await res.json() as { error: string }
+  expect(body.error).toBe("unknown")
+})
