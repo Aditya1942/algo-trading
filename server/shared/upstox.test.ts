@@ -32,6 +32,7 @@ test("upstoxGet returns parsed JSON on success", async () => {
   expect((callArgs[1]?.headers as Record<string, string>)["Authorization"]).toBe(
     "Bearer test_access_token"
   )
+  expect((callArgs[1]?.headers as Record<string, string>)["Accept"]).toBe("application/json")
 
   globalThis.fetch = originalFetch
 })
@@ -51,7 +52,10 @@ test("upstoxGet throws UpstoxError on non-2xx response", async () => {
 
   const { upstoxGet } = await import("./upstox")
 
-  await expect(upstoxGet("/user/profile", mockGetValidToken)).rejects.toBeInstanceOf(UpstoxError)
+  const err = await upstoxGet("/user/profile", mockGetValidToken).catch((e: unknown) => e) as UpstoxError
+  expect(err).toBeInstanceOf(UpstoxError)
+  expect(err.status).toBe(401)
+  expect(err.body).toEqual({ message: "Unauthorized" })
 
   globalThis.fetch = originalFetch
 })
