@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "server": "cd server && bun --hot run index.ts",
-    "client": "cd client && bun --hot run index.ts",
+    "client": "cd client && bun run dev",
+    "build:client": "cd client && bun run build",
     "dev": "bun run --parallel server client"
   }
 }

@@ -60,7 +60,7 @@ Monorepo with two apps:
 algo-trading/
   package.json        ← root scripts only (dev/server/client)
   server/             ← Bun HTTP API + all trading logic
-  client/             ← Frontend dashboard (not yet scaffolded)
+  client/             ← Vite + React dashboard (shadcn/ui — see client/CLAUDE.md)
 ```
 
 ### Server: Modular Monolith
@@ -89,6 +89,8 @@ server/
 - Modules communicate via typed function calls only. No circular dependencies.
 - `api/` is a thin layer — no business logic there.
 - `shared/upstox.ts` is the single Upstox client, used by all modules.
+
+**REST API:** Every HTTP JSON route on the server uses the prefix `/api/v1/` (for example `/api/v1/health`). OAuth and other browser redirect handlers stay at the server root (for example `/auth/callback`) so `UPSTOX_REDIRECT_URI` does not need the API prefix.
 
 ### Strategy Framework
 
@@ -126,12 +128,12 @@ Upstox WebSocket → market-data → StrategyRunner → strategy.onCandle()
 ```env
 UPSTOX_CLIENT_ID=
 UPSTOX_CLIENT_SECRET=
-UPSTOX_REDIRECT_URI=http://localhost:3000/auth/callback
+UPSTOX_REDIRECT_URI=http://localhost:8081/auth/callback
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 ```
 
-Upstox auth: visit `http://localhost:3000/auth/login` once. Token persists in SQLite and auto-refreshes.
+Upstox auth: visit `http://localhost:8081/auth/login` once. Token persists in SQLite and auto-refreshes.
 
 ## Design Spec
 

@@ -61,7 +61,7 @@ Copy `.env.example` to `.env` and fill in:
 ```env
 UPSTOX_CLIENT_ID=
 UPSTOX_CLIENT_SECRET=
-UPSTOX_REDIRECT_URI=http://localhost:3000/auth/callback
+UPSTOX_REDIRECT_URI=http://localhost:8081/auth/callback
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 ```
@@ -72,11 +72,11 @@ TELEGRAM_CHAT_ID=
 bun run index.ts
 ```
 
-Server starts on `http://localhost:3000`.
+Server starts on `http://localhost:8081`.
 
 ### Authenticate with Upstox
 
-Open `http://localhost:3000/auth/login` in your browser. Complete the OAuth flow once — token is stored in SQLite and auto-refreshed.
+Open `http://localhost:8081/auth/login` in your browser. Complete the OAuth flow once — token is stored in SQLite and auto-refreshed.
 
 ## Writing a Strategy
 

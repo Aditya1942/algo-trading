@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 See root `CLAUDE.md` for full project context and architecture.
 
+**REST routes:** Register JSON API handlers under `/api/v1/` (OAuth callbacks such as `/auth/callback` stay at the server root).
+
 ## Commands (from server/)
 
 ```bash

@@ -132,7 +132,7 @@ backtest: fetch OHLCV from Upstox API (or SQLite cache)
 ### Frontend API
 ```
 Frontend SPA
-  ↕ HTTP REST (Bun server :3000)
+  ↕ HTTP REST (Bun server :8081)
 
 GET  /portfolio              → balance, PnL, holdings
 GET  /trades/history         → paginated trade list
