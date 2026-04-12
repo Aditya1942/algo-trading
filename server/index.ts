@@ -21,6 +21,7 @@ Bun.serve({
       GET: () => Response.json({ healthy: true }),
     },
   },
+  fetch: () => Response.json({ error: "not_found" }, { status: 404 }),
 })
 
 console.log(`Server running on http://localhost:${config.port}`)
