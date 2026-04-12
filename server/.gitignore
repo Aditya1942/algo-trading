@@ -17,10 +17,19 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # dotenv environment variable files
 .env
+.env.*
+!.env.example
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
+
+# SQLite database files
+*.db
+*.sqlite
+*.db-shm
+*.db-wal
+*.db-journal
 
 # caches
 .eslintcache

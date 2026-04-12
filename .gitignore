@@ -5,5 +5,8 @@ node_modules/
 .idea/
 *.db
 *.sqlite
+*.db-shm
+*.db-wal
+*.db-journal
 dist/
 .DS_Store
