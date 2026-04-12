@@ -1,7 +1,11 @@
 // server/shared/db.ts
 import { Database } from "bun:sqlite"
+import { join } from "path"
 
-const db = new Database("algo.db")
+const DB_PATH = join(import.meta.dir, "..", "algo.db")
+const db = new Database(DB_PATH)
+
+db.run("PRAGMA journal_mode=WAL")
 
 db.run(`
   CREATE TABLE IF NOT EXISTS tokens (
