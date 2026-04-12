@@ -70,3 +70,80 @@ test("getValidToken refreshes when token expires within 5 minutes", async () => 
 
   globalThis.fetch = originalFetch
 })
+
+// --- exchangeCode ---
+test("exchangeCode stores token and returns access_token on success", async () => {
+  process.env.UPSTOX_CLIENT_ID = "test_client_id"
+  process.env.UPSTOX_CLIENT_SECRET = "test_client_secret"
+  const { exchangeCode } = await import("./index")
+  const db = makeTestDb()
+
+  const mockFetch = mock(() =>
+    Promise.resolve(
+      new Response(
+        JSON.stringify({ access_token: "exc_token", refresh_token: "exc_ref", expires_in: 86400 }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    )
+  )
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = mockFetch as typeof fetch
+
+  const token = await exchangeCode("auth_code_123", db)
+  expect(token).toBe("exc_token")
+
+  // Verify token was persisted
+  const { getToken } = await import("./db")
+  const stored = getToken(db)
+  expect(stored!.access_token).toBe("exc_token")
+  expect(stored!.refresh_token).toBe("exc_ref")
+
+  globalThis.fetch = originalFetch
+})
+
+test("exchangeCode throws AuthError on Upstox error response", async () => {
+  process.env.UPSTOX_CLIENT_ID = "test_client_id"
+  process.env.UPSTOX_CLIENT_SECRET = "test_client_secret"
+  const { exchangeCode } = await import("./index")
+  const db = makeTestDb()
+
+  const mockFetch = mock(() =>
+    Promise.resolve(
+      new Response(JSON.stringify({ message: "Invalid code" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+  )
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = mockFetch as typeof fetch
+
+  await expect(exchangeCode("bad_code", db)).rejects.toMatchObject({ code: "exchange_failed" })
+
+  globalThis.fetch = originalFetch
+})
+
+test("getValidToken throws token_refresh_failed when refresh request fails", async () => {
+  const { getValidToken } = await import("./index")
+  const { upsertToken } = await import("./db")
+  const db = makeTestDb()
+
+  // Token near expiry
+  const expires_at = Math.floor(Date.now() / 1000) + 100
+  upsertToken({ access_token: "old_tok", refresh_token: "ref_tok", expires_at }, db)
+
+  const mockFetch = mock(() =>
+    Promise.resolve(
+      new Response(JSON.stringify({ message: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+  )
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = mockFetch as typeof fetch
+
+  await expect(getValidToken(db)).rejects.toMatchObject({ code: "token_refresh_failed" })
+
+  globalThis.fetch = originalFetch
+})

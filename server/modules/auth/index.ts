@@ -79,7 +79,10 @@ export async function getValidToken(db: Database = _db): Promise<string> {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   })
-  if (!res.ok) throw new AuthError("token_refresh_failed", "Token refresh failed")
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}))
+    throw new AuthError("token_refresh_failed", JSON.stringify(errBody))
+  }
 
   const data = await res.json() as { access_token: string; refresh_token?: string; expires_in: number }
   upsertToken(
