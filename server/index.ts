@@ -15,14 +15,14 @@ Bun.serve({
     "/auth/login":    { GET: L((req) => handleLogin(req)) },
     "/auth/callback": { GET: L((req) => handleCallback(req)) },
 
-    // API v1
-    "/api/v1/user/profile":           { GET: L((req) => handleGetProfile(req)) },
-    "/api/v1/user/funds-and-margin": { GET: L((req) => handleGetFundsAndMargin(req)) },
-    "/api/v1/portfolio/holdings":  { GET: L((req) => handleGetHoldings(req)) },
-    "/api/v1/order/history":       { GET: L((req) => handleGetOrderHistory(req)) },
+    // API v1 — Upstox proxies
+    "/api/v1/upstox/user/profile":           { GET: L((req) => handleGetProfile(req)) },
+    "/api/v1/upstox/user/funds-and-margin": { GET: L((req) => handleGetFundsAndMargin(req)) },
+    "/api/v1/upstox/portfolio/holdings":  { GET: L((req) => handleGetHoldings(req)) },
+    "/api/v1/upstox/order/history":       { GET: L((req) => handleGetOrderHistory(req)) },
+    "/api/v1/upstox/auth/logout": { POST: L(() => handleLogout()) },
 
-    // Health (keep for infra checks)
-    "/api/v1/auth/logout": { POST: L(() => handleLogout()) },
+    // Health (infra; not Upstox)
 
     "/api/v1/health": {
       GET: L(() => Response.json({ healthy: true })),
