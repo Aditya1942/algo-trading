@@ -9,6 +9,16 @@ export async function handleLogin(_req: Request): Promise<Response> {
 
 export async function handleCallback(req: Request): Promise<Response> {
   const url = new URL(req.url)
+
+  // Handle OAuth error response (e.g. user denied access)
+  const oauthError = url.searchParams.get("error")
+  if (oauthError) {
+    return Response.json(
+      { error: oauthError, description: url.searchParams.get("error_description") ?? "" },
+      { status: 400 }
+    )
+  }
+
   const code = url.searchParams.get("code")
   const state = url.searchParams.get("state")
 
