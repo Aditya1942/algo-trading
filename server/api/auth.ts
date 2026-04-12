@@ -40,6 +40,11 @@ export async function handleCallback(req: Request): Promise<Response> {
         302,
       )
     }
-    return Response.redirect(`${clientBase}/auth/callback?error=unknown`, 302)
+    const msg = err instanceof Error ? err.message : "unknown"
+    console.error("[auth/callback] unexpected error:", err)
+    return Response.redirect(
+      `${clientBase}/auth/callback?error=unknown&description=${encodeURIComponent(msg)}`,
+      302,
+    )
   }
 }

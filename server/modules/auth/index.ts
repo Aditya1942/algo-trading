@@ -46,16 +46,23 @@ export async function exchangeCode(code: string, db: Database = _db): Promise<st
     const errBody = await res.json().catch(() => ({}))
     throw new AuthError("exchange_failed", JSON.stringify(errBody))
   }
-  const data = await res.json() as { access_token: string; refresh_token?: string; expires_in: number }
+  const data = await res.json() as Record<string, unknown>
+  console.log("[auth] token response keys:", Object.keys(data))
+
+  const accessToken = data.access_token as string
+  if (!accessToken) throw new AuthError("exchange_failed", "No access_token in response")
+
+  // Upstox may return expires_in (seconds) or expiry time differently
+  const expiresIn = (data.expires_in ?? data.expires ?? 86400) as number
   upsertToken(
     {
-      access_token: data.access_token,
-      refresh_token: data.refresh_token ?? null,
-      expires_at: Math.floor(Date.now() / 1000) + data.expires_in,
+      access_token: accessToken,
+      refresh_token: (data.refresh_token as string) ?? null,
+      expires_at: Math.floor(Date.now() / 1000) + expiresIn,
     },
     db
   )
-  return data.access_token
+  return accessToken
 }
 
 export async function getValidToken(db: Database = _db): Promise<string> {
