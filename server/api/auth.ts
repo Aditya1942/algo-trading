@@ -1,6 +1,8 @@
 // server/api/auth.ts
 import { buildLoginUrl, consumeState, exchangeCode } from "../modules/auth/index"
+import { upstoxDelete as _upstoxDelete, upstoxPost as _upstoxPost } from "../shared/upstox"
 import { AuthError } from "../shared/types"
+import { proxyUpstox } from "./_handle"
 
 export async function handleLogin(_req: Request): Promise<Response> {
   const url = buildLoginUrl()
@@ -47,4 +49,24 @@ export async function handleCallback(req: Request): Promise<Response> {
       302,
     )
   }
+}
+
+// --- DELETE /api/v1/upstox/auth/logout --- (Upstox-side logout)
+export async function handleUpstoxLogout(
+  _req: Request,
+  upstoxDelete: typeof _upstoxDelete = _upstoxDelete
+): Promise<Response> {
+  return proxyUpstox(() => upstoxDelete("/logout"))
+}
+
+// --- POST /api/v1/upstox/auth/webhook-token/:client_id --- (dynamic route)
+export async function handleWebhookToken(
+  _req: Request,
+  params: Record<string, string>,
+  upstoxPost: typeof _upstoxPost = _upstoxPost
+): Promise<Response> {
+  const { client_id } = params
+  return proxyUpstox(() =>
+    upstoxPost(`/login/auth/token/request/${client_id}`, {}, undefined, { version: 3 })
+  )
 }
