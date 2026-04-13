@@ -272,6 +272,11 @@ export function countStoredInstruments(db: Database = defaultDb): number {
 
 // --- Next active instrument for worker ---
 
+export function listTrackedInstrumentKeys(db: Database = defaultDb): string[] {
+  const rows = db.query('SELECT instrument_key FROM tracked_instruments').all() as { instrument_key: string }[]
+  return rows.map(r => r.instrument_key)
+}
+
 export function getNextActiveInstrument(db: Database = defaultDb): TrackedInstrument | null {
   return db.query(
     "SELECT * FROM tracked_instruments WHERE status = 'active' ORDER BY updated_at ASC LIMIT 1",

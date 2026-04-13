@@ -15,6 +15,7 @@ export {
   deleteInstrumentCandles,
   listInstrumentsWithStats,
   getNextActiveInstrument,
+  listTrackedInstrumentKeys,
   upsertInstruments,
   searchStoredInstruments,
   countStoredInstruments,

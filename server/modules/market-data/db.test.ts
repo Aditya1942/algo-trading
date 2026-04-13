@@ -69,6 +69,7 @@ import {
   upsertInstruments,
   searchStoredInstruments,
   countStoredInstruments,
+  listTrackedInstrumentKeys,
 } from "./db"
 
 let db: Database
@@ -165,6 +166,20 @@ describe("instruments", () => {
     const inst = addInstrument("KEY1", "A", "", db)
     updateInstrumentStatus(inst.id, "paused", db)
     expect(getNextActiveInstrument(db)).toBeNull()
+  })
+
+  test("listTrackedInstrumentKeys returns keys of all tracked instruments", () => {
+    addInstrument("NSE_EQ|INE848E01016", "HDFC", "NSE", db)
+    addInstrument("NSE_EQ|INE002A01018", "RELIANCE", "NSE", db)
+    const keys = listTrackedInstrumentKeys(db)
+    expect(keys.length).toBe(2)
+    expect(keys).toContain("NSE_EQ|INE848E01016")
+    expect(keys).toContain("NSE_EQ|INE002A01018")
+  })
+
+  test("listTrackedInstrumentKeys returns empty array when no instruments", () => {
+    const keys = listTrackedInstrumentKeys(db)
+    expect(keys).toEqual([])
   })
 })
 
