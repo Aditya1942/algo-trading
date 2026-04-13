@@ -8,6 +8,7 @@ import {
   History,
   Database,
   Search,
+  FlaskConical,
 } from 'lucide-react'
 
 import {
@@ -106,9 +107,23 @@ export function AppShell({ title = 'Algo Trading', children }: AppShellProps) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Strategies">
+                  <SidebarMenuButton
+                    tooltip="Strategies"
+                    isActive={path === '/backtest'}
+                    onClick={() => navigate('/backtest')}
+                  >
                     <LineChart />
                     <span>Strategies</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="Backtest"
+                    isActive={path === '/backtest'}
+                    onClick={() => navigate('/backtest')}
+                  >
+                    <FlaskConical />
+                    <span>Backtest</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
