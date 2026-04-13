@@ -257,4 +257,8 @@ export async function resumeInstrument(id: number): Promise<void> {
   await marketDataFetch(`/instruments/${id}/resume`, { method: 'POST' })
 }
 
+export async function getTrackedInstrumentKeys(): Promise<string[]> {
+  return marketDataFetch<string[]>('/instruments/keys')
+}
+
 export { ApiError }

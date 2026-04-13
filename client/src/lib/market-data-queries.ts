@@ -5,11 +5,13 @@ import {
   deleteTrackedInstrument,
   pauseInstrument,
   resumeInstrument,
+  getTrackedInstrumentKeys,
 } from '@/lib/api'
 
 export const marketDataKeys = {
   all: ['market-data'] as const,
   instruments: () => [...marketDataKeys.all, 'instruments'] as const,
+  trackedKeys: () => [...marketDataKeys.all, 'tracked-keys'] as const,
 }
 
 export function useTrackedInstrumentsQuery() {
@@ -20,12 +22,22 @@ export function useTrackedInstrumentsQuery() {
   })
 }
 
+export function useTrackedInstrumentKeysQuery() {
+  return useQuery({
+    queryKey: marketDataKeys.trackedKeys(),
+    queryFn: getTrackedInstrumentKeys,
+  })
+}
+
 export function useAddInstrumentMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (vars: { instrumentKey: string; name?: string; exchange?: string }) =>
       addTrackedInstrument(vars.instrumentKey, vars.name, vars.exchange),
-    onSuccess: () => qc.invalidateQueries({ queryKey: marketDataKeys.instruments() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: marketDataKeys.instruments() })
+      qc.invalidateQueries({ queryKey: marketDataKeys.trackedKeys() })
+    },
   })
 }
 
