@@ -1,0 +1,54 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  getTrackedInstruments,
+  addTrackedInstrument,
+  deleteTrackedInstrument,
+  pauseInstrument,
+  resumeInstrument,
+} from '@/lib/api'
+
+export const marketDataKeys = {
+  all: ['market-data'] as const,
+  instruments: () => [...marketDataKeys.all, 'instruments'] as const,
+}
+
+export function useTrackedInstrumentsQuery() {
+  return useQuery({
+    queryKey: marketDataKeys.instruments(),
+    queryFn: getTrackedInstruments,
+    refetchInterval: 5_000, // live progress updates
+  })
+}
+
+export function useAddInstrumentMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (vars: { instrumentKey: string; name?: string; exchange?: string }) =>
+      addTrackedInstrument(vars.instrumentKey, vars.name, vars.exchange),
+    onSuccess: () => qc.invalidateQueries({ queryKey: marketDataKeys.instruments() }),
+  })
+}
+
+export function useDeleteInstrumentMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: deleteTrackedInstrument,
+    onSuccess: () => qc.invalidateQueries({ queryKey: marketDataKeys.instruments() }),
+  })
+}
+
+export function usePauseInstrumentMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: pauseInstrument,
+    onSuccess: () => qc.invalidateQueries({ queryKey: marketDataKeys.instruments() }),
+  })
+}
+
+export function useResumeInstrumentMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: resumeInstrument,
+    onSuccess: () => qc.invalidateQueries({ queryKey: marketDataKeys.instruments() }),
+  })
+}
