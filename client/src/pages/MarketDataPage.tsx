@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Database,
   Plus,
@@ -40,7 +40,8 @@ import {
   usePauseInstrumentMutation,
   useResumeInstrumentMutation,
 } from '@/lib/market-data-queries'
-import type { TrackedInstrument } from '@/lib/api'
+import { useStoredInstrumentsQuery } from '@/lib/upstox-queries'
+import type { TrackedInstrument, StoredInstrument } from '@/lib/api'
 
 const statusConfig: Record<
   string,
@@ -86,7 +87,25 @@ function AddInstrumentDialog() {
   const [open, setOpen] = useState(false)
   const [instrumentKey, setInstrumentKey] = useState('')
   const [name, setName] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [showDropdown, setShowDropdown] = useState(false)
   const addMutation = useAddInstrumentMutation()
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchInput.trim()), 300)
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
+  const { data: searchResults } = useStoredInstrumentsQuery(debouncedSearch, 1)
+  const suggestions = debouncedSearch.length >= 2 ? (searchResults?.data ?? []) : []
+
+  function handleSelect(inst: StoredInstrument) {
+    setInstrumentKey(inst.instrument_key)
+    setName(inst.name || inst.trading_symbol)
+    setSearchInput(inst.trading_symbol)
+    setShowDropdown(false)
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -97,6 +116,7 @@ function AddInstrumentDialog() {
         onSuccess: () => {
           setInstrumentKey('')
           setName('')
+          setSearchInput('')
           setOpen(false)
         },
       },
@@ -116,11 +136,47 @@ function AddInstrumentDialog() {
           <DialogHeader>
             <DialogTitle>Add Instrument</DialogTitle>
             <DialogDescription>
-              Enter the Upstox instrument key to start downloading historical data.
-              Example: NSE_EQ|INE848E01016
+              Search for an instrument or enter the Upstox instrument key directly.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 space-y-3">
+            {/* Search / autocomplete */}
+            <div className="relative">
+              <label className="text-sm font-medium" htmlFor="instrument-search">
+                Search Instrument
+              </label>
+              <Input
+                id="instrument-search"
+                placeholder="Search by symbol or name..."
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value)
+                  setShowDropdown(true)
+                }}
+                onFocus={() => setShowDropdown(true)}
+                autoFocus
+              />
+              {showDropdown && suggestions.length > 0 && (
+                <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg max-h-48 overflow-y-auto">
+                  {suggestions.map((inst) => (
+                    <button
+                      key={inst.instrument_key}
+                      type="button"
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-accent flex justify-between items-center"
+                      onClick={() => handleSelect(inst)}
+                    >
+                      <span>
+                        <span className="font-medium">{inst.trading_symbol}</span>
+                        <span className="ml-2 text-muted-foreground">{inst.name}</span>
+                      </span>
+                      <span className="text-xs text-muted-foreground">{inst.exchange}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Instrument key (auto-filled or manual) */}
             <div>
               <label className="text-sm font-medium" htmlFor="instrument-key">
                 Instrument Key *
@@ -130,7 +186,6 @@ function AddInstrumentDialog() {
                 placeholder="NSE_EQ|INE848E01016"
                 value={instrumentKey}
                 onChange={(e) => setInstrumentKey(e.target.value)}
-                autoFocus
               />
             </div>
             <div>
