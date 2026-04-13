@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Search, Copy, Check, Database, Globe, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Copy, Check, Database, Globe, ChevronLeft, ChevronRight, Download, Loader2 } from 'lucide-react'
 import {
   useInstrumentSearchQuery,
   useStoredInstrumentsQuery,
   useStoredInstrumentsCountQuery,
 } from '@/lib/upstox-queries'
+import {
+  useTrackedInstrumentsQuery,
+  useAddInstrumentMutation,
+} from '@/lib/market-data-queries'
+import type { TrackedInstrument } from '@/lib/api'
 import { AppShell } from '@/components/layout/AppShell'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -57,7 +62,21 @@ function ResultsSkeleton() {
   )
 }
 
-function InstrumentsTable({ data }: { data: Array<{ instrument_key: string; trading_symbol: string; name: string; exchange: string; instrument_type: string }> }) {
+const downloadStatusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  active: { label: 'Downloading', variant: 'default' },
+  paused: { label: 'Paused', variant: 'secondary' },
+  completed: { label: 'Completed', variant: 'outline' },
+  error: { label: 'Error', variant: 'destructive' },
+}
+
+function InstrumentsTable({
+  data,
+  trackedMap,
+}: {
+  data: Array<{ instrument_key: string; trading_symbol: string; name: string; exchange: string; instrument_type: string }>
+  trackedMap?: Map<string, TrackedInstrument>
+}) {
+  const addMutation = useAddInstrumentMutation()
   return (
     <Table>
       <TableHeader>
@@ -67,6 +86,7 @@ function InstrumentsTable({ data }: { data: Array<{ instrument_key: string; trad
           <TableHead>Name</TableHead>
           <TableHead>Exchange</TableHead>
           <TableHead>Type</TableHead>
+          {trackedMap && <TableHead>Download</TableHead>}
           <TableHead className="w-10" />
         </TableRow>
       </TableHeader>
@@ -78,6 +98,31 @@ function InstrumentsTable({ data }: { data: Array<{ instrument_key: string; trad
             <TableCell className="text-muted-foreground">{inst.name}</TableCell>
             <TableCell><Badge variant="secondary">{inst.exchange}</Badge></TableCell>
             <TableCell><Badge variant="outline">{inst.instrument_type}</Badge></TableCell>
+            {trackedMap && (
+              <TableCell>
+                {trackedMap.has(inst.instrument_key) ? (
+                  (() => {
+                    const tracked = trackedMap.get(inst.instrument_key)!
+                    const cfg = downloadStatusMap[tracked.status] ?? { label: tracked.status, variant: 'secondary' as const }
+                    return <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                  })()
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={addMutation.isPending}
+                    onClick={() => addMutation.mutate({ instrumentKey: inst.instrument_key, name: inst.name || inst.trading_symbol, exchange: inst.exchange })}
+                  >
+                    {addMutation.isPending ? (
+                      <Loader2 className="size-3.5 mr-1 animate-spin" />
+                    ) : (
+                      <Download className="size-3.5 mr-1" />
+                    )}
+                    Download
+                  </Button>
+                )}
+              </TableCell>
+            )}
             <TableCell><CopyButton text={inst.instrument_key} /></TableCell>
           </TableRow>
         ))}
@@ -101,6 +146,8 @@ function StoredInstrumentsTab() {
 
   const { data: countData } = useStoredInstrumentsCountQuery()
   const { data, isPending, isError, error } = useStoredInstrumentsQuery(debouncedSearch, page)
+  const { data: trackedInstruments = [] } = useTrackedInstrumentsQuery()
+  const trackedMap = new Map(trackedInstruments.map(t => [t.instrument_key, t]))
 
   const totalCount = countData ?? 0
 
@@ -152,7 +199,7 @@ function StoredInstrumentsTab() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <InstrumentsTable data={data.data} />
+                <InstrumentsTable data={data.data} trackedMap={trackedMap} />
               </CardContent>
               {data.totalPages > 1 && (
                 <div className="flex items-center justify-between border-t px-4 py-3">
