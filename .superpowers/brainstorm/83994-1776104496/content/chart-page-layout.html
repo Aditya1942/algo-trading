@@ -1,0 +1,176 @@
+<h2>Chart Page Layout</h2>
+<p class="subtitle">How should the investment detail page be structured? Reference: Upstox chart page</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a0a;border-radius:8px;padding:16px;font-family:system-ui;color:#e0e0e0;min-height:340px;">
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;background:#1a3a2a;color:#4ade80;padding:2px 6px;border-radius:4px;">NSE</span>
+              <span style="font-weight:600;font-size:16px;">RELIANCE</span>
+              <span style="color:#888;font-size:13px;">Reliance Industries Ltd</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-top:4px;">
+              <span style="font-size:24px;font-weight:700;">₹2,847.50</span>
+              <span style="color:#4ade80;font-size:14px;">+32.15 (+1.14%)</span>
+            </div>
+          </div>
+          <button style="background:#222;color:#ccc;border:1px solid #333;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;">← Back to list</button>
+        </div>
+
+        <!-- Timeline filters -->
+        <div style="display:flex;gap:4px;margin-bottom:12px;">
+          <span style="padding:4px 12px;border-radius:4px;font-size:12px;background:#222;color:#888;cursor:pointer;">1D</span>
+          <span style="padding:4px 12px;border-radius:4px;font-size:12px;background:#222;color:#888;cursor:pointer;">1W</span>
+          <span style="padding:4px 12px;border-radius:4px;font-size:12px;background:#1a3a2a;color:#4ade80;cursor:pointer;border:1px solid #4ade80;">1M</span>
+          <span style="padding:4px 12px;border-radius:4px;font-size:12px;background:#222;color:#888;cursor:pointer;">3M</span>
+          <span style="padding:4px 12px;border-radius:4px;font-size:12px;background:#222;color:#888;cursor:pointer;">6M</span>
+          <span style="padding:4px 12px;border-radius:4px;font-size:12px;background:#222;color:#888;cursor:pointer;">1Y</span>
+          <span style="padding:4px 12px;border-radius:4px;font-size:12px;background:#222;color:#888;cursor:pointer;">5Y</span>
+          <span style="padding:4px 12px;border-radius:4px;font-size:12px;background:#222;color:#888;cursor:pointer;">ALL</span>
+        </div>
+
+        <!-- Chart area -->
+        <div style="background:#111;border:1px solid #222;border-radius:6px;height:180px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+          <!-- Fake candlesticks -->
+          <svg width="100%" height="160" viewBox="0 0 500 160" style="padding:10px;">
+            <!-- Grid lines -->
+            <line x1="0" y1="40" x2="500" y2="40" stroke="#1a1a1a" stroke-width="1"/>
+            <line x1="0" y1="80" x2="500" y2="80" stroke="#1a1a1a" stroke-width="1"/>
+            <line x1="0" y1="120" x2="500" y2="120" stroke="#1a1a1a" stroke-width="1"/>
+            <!-- Green candles -->
+            <line x1="30" y1="30" x2="30" y2="110" stroke="#4ade80" stroke-width="1"/>
+            <rect x="24" y="50" width="12" height="40" fill="#4ade80" rx="1"/>
+            <line x1="70" y1="40" x2="70" y2="120" stroke="#4ade80" stroke-width="1"/>
+            <rect x="64" y="55" width="12" height="35" fill="#4ade80" rx="1"/>
+            <!-- Red candle -->
+            <line x1="110" y1="35" x2="110" y2="115" stroke="#f87171" stroke-width="1"/>
+            <rect x="104" y="45" width="12" height="45" fill="#f87171" rx="1"/>
+            <!-- Green -->
+            <line x1="150" y1="25" x2="150" y2="100" stroke="#4ade80" stroke-width="1"/>
+            <rect x="144" y="35" width="12" height="30" fill="#4ade80" rx="1"/>
+            <line x1="190" y1="20" x2="190" y2="95" stroke="#4ade80" stroke-width="1"/>
+            <rect x="184" y="30" width="12" height="35" fill="#4ade80" rx="1"/>
+            <!-- Red -->
+            <line x1="230" y1="25" x2="230" y2="105" stroke="#f87171" stroke-width="1"/>
+            <rect x="224" y="40" width="12" height="40" fill="#f87171" rx="1"/>
+            <line x1="270" y1="45" x2="270" y2="120" stroke="#f87171" stroke-width="1"/>
+            <rect x="264" y="55" width="12" height="35" fill="#f87171" rx="1"/>
+            <!-- Green -->
+            <line x1="310" y1="30" x2="310" y2="110" stroke="#4ade80" stroke-width="1"/>
+            <rect x="304" y="40" width="12" height="30" fill="#4ade80" rx="1"/>
+            <line x1="350" y1="15" x2="350" y2="90" stroke="#4ade80" stroke-width="1"/>
+            <rect x="344" y="25" width="12" height="35" fill="#4ade80" rx="1"/>
+            <line x1="390" y1="20" x2="390" y2="85" stroke="#4ade80" stroke-width="1"/>
+            <rect x="384" y="28" width="12" height="30" fill="#4ade80" rx="1"/>
+            <!-- Red -->
+            <line x1="430" y1="25" x2="430" y2="100" stroke="#f87171" stroke-width="1"/>
+            <rect x="424" y="35" width="12" height="40" fill="#f87171" rx="1"/>
+            <line x1="470" y1="30" x2="470" y2="95" stroke="#4ade80" stroke-width="1"/>
+            <rect x="464" y="38" width="12" height="25" fill="#4ade80" rx="1"/>
+          </svg>
+        </div>
+
+        <!-- Volume bars hint -->
+        <div style="background:#111;border:1px solid #222;border-radius:6px;height:40px;margin-top:4px;display:flex;align-items:flex-end;padding:4px 10px;gap:3px;">
+          <div style="width:12px;height:20px;background:#4ade8040;border-radius:2px;"></div>
+          <div style="width:12px;height:15px;background:#4ade8040;border-radius:2px;"></div>
+          <div style="width:12px;height:25px;background:#f8717140;border-radius:2px;"></div>
+          <div style="width:12px;height:18px;background:#4ade8040;border-radius:2px;"></div>
+          <div style="width:12px;height:30px;background:#4ade8040;border-radius:2px;"></div>
+          <div style="width:12px;height:12px;background:#f8717140;border-radius:2px;"></div>
+          <div style="width:12px;height:22px;background:#f8717140;border-radius:2px;"></div>
+          <div style="width:12px;height:16px;background:#4ade8040;border-radius:2px;"></div>
+          <div style="width:12px;height:28px;background:#4ade8040;border-radius:2px;"></div>
+          <div style="width:12px;height:14px;background:#4ade8040;border-radius:2px;"></div>
+          <div style="width:12px;height:20px;background:#f8717140;border-radius:2px;"></div>
+          <div style="width:12px;height:10px;background:#4ade8040;border-radius:2px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Chart-Focused (Upstox Style)</h3>
+      <p>Header with instrument info + price → timeline filters → large candlestick chart → volume bars below. Chart dominates the page. Clean, focused.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a0a;border-radius:8px;padding:16px;font-family:system-ui;color:#e0e0e0;min-height:340px;">
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;background:#1a3a2a;color:#4ade80;padding:2px 6px;border-radius:4px;">NSE</span>
+              <span style="font-weight:600;font-size:16px;">RELIANCE</span>
+            </div>
+            <span style="font-size:20px;font-weight:700;">₹2,847.50</span>
+            <span style="color:#4ade80;font-size:13px;margin-left:8px;">+1.14%</span>
+          </div>
+          <button style="background:#222;color:#ccc;border:1px solid #333;padding:6px 14px;border-radius:6px;font-size:13px;">← Back</button>
+        </div>
+
+        <!-- Two column layout -->
+        <div style="display:flex;gap:12px;">
+          <!-- Chart column -->
+          <div style="flex:2;">
+            <div style="display:flex;gap:4px;margin-bottom:8px;">
+              <span style="padding:3px 10px;border-radius:4px;font-size:11px;background:#1a3a2a;color:#4ade80;border:1px solid #4ade80;">1M</span>
+              <span style="padding:3px 10px;border-radius:4px;font-size:11px;background:#222;color:#888;">3M</span>
+              <span style="padding:3px 10px;border-radius:4px;font-size:11px;background:#222;color:#888;">1Y</span>
+              <span style="padding:3px 10px;border-radius:4px;font-size:11px;background:#222;color:#888;">ALL</span>
+            </div>
+            <div style="background:#111;border:1px solid #222;border-radius:6px;height:180px;display:flex;align-items:center;justify-content:center;">
+              <svg width="100%" height="150" viewBox="0 0 300 150">
+                <line x1="0" y1="50" x2="300" y2="50" stroke="#1a1a1a"/>
+                <line x1="0" y1="100" x2="300" y2="100" stroke="#1a1a1a"/>
+                <line x1="40" y1="30" x2="40" y2="100" stroke="#4ade80"/>
+                <rect x="34" y="45" width="12" height="30" fill="#4ade80"/>
+                <line x1="80" y1="40" x2="80" y2="110" stroke="#f87171"/>
+                <rect x="74" y="50" width="12" height="35" fill="#f87171"/>
+                <line x1="120" y1="25" x2="120" y2="90" stroke="#4ade80"/>
+                <rect x="114" y="35" width="12" height="25" fill="#4ade80"/>
+                <line x1="160" y1="20" x2="160" y2="85" stroke="#4ade80"/>
+                <rect x="154" y="30" width="12" height="30" fill="#4ade80"/>
+                <line x1="200" y1="35" x2="200" y2="105" stroke="#f87171"/>
+                <rect x="194" y="45" width="12" height="35" fill="#f87171"/>
+                <line x1="240" y1="15" x2="240" y2="80" stroke="#4ade80"/>
+                <rect x="234" y="25" width="12" height="25" fill="#4ade80"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Info sidebar -->
+          <div style="flex:1;background:#111;border:1px solid #222;border-radius:6px;padding:12px;font-size:12px;">
+            <div style="font-weight:600;margin-bottom:8px;color:#aaa;text-transform:uppercase;font-size:10px;letter-spacing:1px;">Stats</div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1a1a1a;">
+              <span style="color:#888;">Open</span><span>₹2,820.00</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1a1a1a;">
+              <span style="color:#888;">High</span><span>₹2,855.30</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1a1a1a;">
+              <span style="color:#888;">Low</span><span>₹2,810.45</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1a1a1a;">
+              <span style="color:#888;">Volume</span><span>12.5M</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1a1a1a;">
+              <span style="color:#888;">Candles</span><span>1,247</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;">
+              <span style="color:#888;">Range</span><span>2020–2024</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Chart + Info Sidebar</h3>
+      <p>Two-column: chart on left (70%), stats sidebar on right (30%) showing OHLCV details, candle count, date range. More info density but smaller chart.</p>
+    </div>
+  </div>
+</div>

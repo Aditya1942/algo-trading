@@ -62,6 +62,7 @@ import {
   updateInstrumentError,
   insertCandles,
   queryCandles,
+  queryCandlesAggregated,
   countCandles,
   deleteInstrumentCandles,
   listInstrumentsWithStats,
@@ -351,5 +352,109 @@ describe("instruments cache", () => {
       { instrument_key: "NSE_EQ|INE002A01018", trading_symbol: "RELIANCE", name: "Reliance", exchange: "NSE", instrument_type: "EQUITY", raw_data: "{}" },
     ], db)
     expect(countStoredInstruments(db)).toBe(1)
+  })
+})
+
+describe("queryCandlesAggregated", () => {
+  const KEY = "NSE_EQ|INE001"
+
+  test("daily: same-day candles aggregate correctly", () => {
+    const db = createTestDb()
+    const candles: CandleRow[] = [
+      { instrument_key: KEY, timestamp: "2024-01-15T09:15:00+05:30", open: 100, high: 105, low: 97, close: 101, volume: 1000, oi: 0 },
+      { instrument_key: KEY, timestamp: "2024-01-15T10:15:00+05:30", open: 200, high: 205, low: 197, close: 201, volume: 1000, oi: 0 },
+      { instrument_key: KEY, timestamp: "2024-01-15T11:15:00+05:30", open: 150, high: 155, low: 147, close: 151, volume: 1000, oi: 0 },
+    ]
+    insertCandles(candles, db)
+
+    const rows = queryCandlesAggregated(KEY, "2024-01-15", "2024-01-15T23:59:59", "1d", db)
+    expect(rows.length).toBe(1)
+    expect(rows[0].open).toBe(100)
+    expect(rows[0].close).toBe(151)
+    expect(rows[0].high).toBe(205)
+    expect(rows[0].low).toBe(97)
+    expect(rows[0].volume).toBe(3000)
+  })
+
+  test("multi-day: multiple days produce multiple rows", () => {
+    const db = createTestDb()
+    const candles: CandleRow[] = [
+      { instrument_key: KEY, timestamp: "2024-01-15T09:15:00+05:30", open: 100, high: 105, low: 97, close: 101, volume: 500, oi: 0 },
+      { instrument_key: KEY, timestamp: "2024-01-15T10:15:00+05:30", open: 110, high: 115, low: 107, close: 111, volume: 500, oi: 0 },
+      { instrument_key: KEY, timestamp: "2024-01-16T09:15:00+05:30", open: 200, high: 210, low: 195, close: 205, volume: 600, oi: 0 },
+      { instrument_key: KEY, timestamp: "2024-01-16T10:15:00+05:30", open: 210, high: 220, low: 205, close: 215, volume: 600, oi: 0 },
+      { instrument_key: KEY, timestamp: "2024-01-17T09:15:00+05:30", open: 300, high: 310, low: 295, close: 305, volume: 700, oi: 0 },
+      { instrument_key: KEY, timestamp: "2024-01-17T10:15:00+05:30", open: 310, high: 320, low: 305, close: 315, volume: 700, oi: 0 },
+    ]
+    insertCandles(candles, db)
+
+    const rows = queryCandlesAggregated(KEY, "2024-01-15", "2024-01-17T23:59:59", "1d", db)
+    expect(rows.length).toBe(3)
+    expect(rows[0].timestamp).toBe("2024-01-15")
+    expect(rows[1].timestamp).toBe("2024-01-16")
+    expect(rows[2].timestamp).toBe("2024-01-17")
+    // Day 1: open from first candle, close from last
+    expect(rows[0].open).toBe(100)
+    expect(rows[0].close).toBe(111)
+    // Day 2
+    expect(rows[1].open).toBe(200)
+    expect(rows[1].close).toBe(215)
+    // Day 3
+    expect(rows[2].open).toBe(300)
+    expect(rows[2].close).toBe(315)
+  })
+
+  test("hourly: groups by hour", () => {
+    const db = createTestDb()
+    const candles: CandleRow[] = [
+      makeCandle(KEY, "2024-01-15T09:15:00+05:30", 100),
+      makeCandle(KEY, "2024-01-15T09:30:00+05:30", 110),
+      makeCandle(KEY, "2024-01-15T10:15:00+05:30", 120),
+    ]
+    insertCandles(candles, db)
+
+    const rows = queryCandlesAggregated(KEY, "2024-01-15", "2024-01-15T23:59:59", "1h", db)
+    expect(rows.length).toBe(2)
+    expect(rows[0].timestamp).toBe("2024-01-15T09")
+    expect(rows[1].timestamp).toBe("2024-01-15T10")
+  })
+
+  test("1m passthrough: returns same as queryCandles", () => {
+    const db = createTestDb()
+    const candles: CandleRow[] = [
+      makeCandle(KEY, "2024-01-15T09:15:00+05:30", 100),
+      makeCandle(KEY, "2024-01-15T09:16:00+05:30", 110),
+      makeCandle(KEY, "2024-01-15T09:17:00+05:30", 120),
+    ]
+    insertCandles(candles, db)
+
+    const from = "2024-01-15"
+    const to = "2024-01-15T23:59:59"
+    const aggregated = queryCandlesAggregated(KEY, from, to, "1m", db)
+    const raw = queryCandles(KEY, from, to, db)
+    expect(aggregated).toEqual(raw)
+  })
+
+  test("date range filtering", () => {
+    const db = createTestDb()
+    const candles: CandleRow[] = [
+      makeCandle(KEY, "2024-01-01T09:15:00+05:30", 100),
+      makeCandle(KEY, "2024-01-02T09:15:00+05:30", 110),
+      makeCandle(KEY, "2024-01-03T09:15:00+05:30", 120),
+      makeCandle(KEY, "2024-01-04T09:15:00+05:30", 130),
+      makeCandle(KEY, "2024-01-05T09:15:00+05:30", 140),
+    ]
+    insertCandles(candles, db)
+
+    const rows = queryCandlesAggregated(KEY, "2024-01-02", "2024-01-03T23:59:59", "1d", db)
+    expect(rows.length).toBe(2)
+    expect(rows[0].timestamp).toBe("2024-01-02")
+    expect(rows[1].timestamp).toBe("2024-01-03")
+  })
+
+  test("empty result for non-existent key", () => {
+    const db = createTestDb()
+    const rows = queryCandlesAggregated("FAKE|KEY", "2024-01-01", "2024-12-31", "1d", db)
+    expect(rows).toEqual([])
   })
 })

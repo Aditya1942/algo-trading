@@ -11,6 +11,7 @@ export {
   updateInstrumentError,
   insertCandles,
   queryCandles,
+  queryCandlesAggregated,
   countCandles,
   deleteInstrumentCandles,
   listInstrumentsWithStats,

@@ -6,12 +6,15 @@ import {
   pauseInstrument,
   resumeInstrument,
   getTrackedInstrumentKeys,
+  getCandles,
 } from '@/lib/api'
 
 export const marketDataKeys = {
   all: ['market-data'] as const,
   instruments: () => [...marketDataKeys.all, 'instruments'] as const,
   trackedKeys: () => [...marketDataKeys.all, 'tracked-keys'] as const,
+  candles: (id: number, from?: string, to?: string, interval?: string) =>
+    [...marketDataKeys.all, 'candles', id, from, to, interval] as const,
 }
 
 export function useTrackedInstrumentsQuery() {
@@ -62,5 +65,14 @@ export function useResumeInstrumentMutation() {
   return useMutation({
     mutationFn: resumeInstrument,
     onSuccess: () => qc.invalidateQueries({ queryKey: marketDataKeys.instruments() }),
+  })
+}
+
+export function useCandlesQuery(instrumentId: number, from?: string, to?: string, interval: '1d' | '1h' | '1m' = '1d') {
+  return useQuery({
+    queryKey: marketDataKeys.candles(instrumentId, from, to, interval),
+    queryFn: () => getCandles(instrumentId, from, to, interval),
+    enabled: !!instrumentId,
+    staleTime: 5 * 60 * 1000, // historical data rarely changes
   })
 }

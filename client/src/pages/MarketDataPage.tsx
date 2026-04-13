@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Database,
   Plus,
@@ -299,7 +300,7 @@ function InstrumentActions({ instrument }: { instrument: TrackedInstrument }) {
   )
 }
 
-function InstrumentTable({ instruments }: { instruments: TrackedInstrument[] }) {
+function InstrumentTable({ instruments, onInstrumentClick }: { instruments: TrackedInstrument[]; onInstrumentClick: (id: number) => void }) {
   if (instruments.length === 0) {
     return (
       <Card>
@@ -327,7 +328,11 @@ function InstrumentTable({ instruments }: { instruments: TrackedInstrument[] }) 
         </TableHeader>
         <TableBody>
           {instruments.map((inst) => (
-            <TableRow key={inst.id}>
+            <TableRow
+              key={inst.id}
+              className="cursor-pointer hover:bg-accent/50"
+              onClick={() => onInstrumentClick(inst.id)}
+            >
               <TableCell>
                 <div>
                   <div className="font-medium">
@@ -360,7 +365,7 @@ function InstrumentTable({ instruments }: { instruments: TrackedInstrument[] }) 
                   ? `${inst.earliest_fetched} to ${inst.latest_fetched}`
                   : 'Not started'}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                 <InstrumentActions instrument={inst} />
               </TableCell>
             </TableRow>
@@ -372,6 +377,7 @@ function InstrumentTable({ instruments }: { instruments: TrackedInstrument[] }) 
 }
 
 export function MarketDataPage() {
+  const navigate = useNavigate()
   const { data: instruments = [], isPending, isError, error } = useTrackedInstrumentsQuery()
 
   const totalCandles = instruments.reduce((sum, i) => sum + i.candle_count, 0)
@@ -443,7 +449,7 @@ export function MarketDataPage() {
           </Card>
         </div>
 
-        <InstrumentTable instruments={instruments} />
+        <InstrumentTable instruments={instruments} onInstrumentClick={(id) => navigate(`/market-data/${id}/chart`)} />
       </>
     )
   }

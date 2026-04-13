@@ -163,6 +163,39 @@ export function queryCandles(
   ).all(instrumentKey, from, to) as CandleRow[]
 }
 
+export function queryCandlesAggregated(
+  instrumentKey: string,
+  from: string,
+  to: string,
+  interval: '1d' | '1h' | '1m',
+  db: Database = defaultDb,
+): CandleRow[] {
+  if (interval === '1m') return queryCandles(instrumentKey, from, to, db)
+
+  const groupExpr = interval === '1d' ? 'substr(timestamp, 1, 10)' : 'substr(timestamp, 1, 13)'
+
+  return db.query(
+    `WITH bounds AS (
+      SELECT instrument_key, ${groupExpr} as bucket,
+        MIN(timestamp) as first_ts, MAX(timestamp) as last_ts,
+        MAX(high) as high, MIN(low) as low,
+        SUM(volume) as volume, MAX(oi) as oi
+      FROM candles
+      WHERE instrument_key = ? AND timestamp >= ? AND timestamp <= ?
+      GROUP BY instrument_key, ${groupExpr}
+    )
+    SELECT b.instrument_key, b.bucket as timestamp,
+      first_c.open, b.high, b.low, last_c.close,
+      b.volume, b.oi
+    FROM bounds b
+    JOIN candles first_c ON first_c.instrument_key = b.instrument_key
+      AND first_c.timestamp = b.first_ts
+    JOIN candles last_c ON last_c.instrument_key = b.instrument_key
+      AND last_c.timestamp = b.last_ts
+    ORDER BY b.bucket ASC`,
+  ).all(instrumentKey, from, to) as CandleRow[]
+}
+
 export function countCandles(instrumentKey: string, db: Database = defaultDb): number {
   const row = db.query(
     'SELECT COUNT(*) as cnt FROM candles WHERE instrument_key = ?',

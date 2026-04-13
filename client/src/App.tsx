@@ -8,6 +8,7 @@ import { OrdersPage } from '@/pages/OrdersPage'
 import { MarketDataPage } from '@/pages/MarketDataPage'
 import { InstrumentsPage } from '@/pages/InstrumentsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { ChartPage } from '@/pages/ChartPage'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { status } = useAuth()
@@ -64,6 +65,14 @@ function App() {
             element={
               <RequireAuth>
                 <MarketDataPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/market-data/:id/chart"
+            element={
+              <RequireAuth>
+                <ChartPage />
               </RequireAuth>
             }
           />

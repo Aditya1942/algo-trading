@@ -261,4 +261,33 @@ export async function getTrackedInstrumentKeys(): Promise<string[]> {
   return marketDataFetch<string[]>('/instruments/keys')
 }
 
+// --- Candle Data ---
+
+export interface CandleData {
+  instrument_key: string
+  timestamp: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+  oi: number
+}
+
+export async function getCandles(
+  instrumentId: number,
+  from?: string,
+  to?: string,
+  interval: '1d' | '1h' | '1m' = '1d',
+): Promise<CandleData[]> {
+  const params = new URLSearchParams()
+  if (from) params.set('from', from)
+  if (to) params.set('to', to)
+  params.set('interval', interval)
+  const query = params.toString()
+  return marketDataFetch<CandleData[]>(
+    `/instruments/${instrumentId}/candles${query ? `?${query}` : ''}`,
+  )
+}
+
 export { ApiError }

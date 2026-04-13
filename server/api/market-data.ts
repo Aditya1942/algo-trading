@@ -6,7 +6,7 @@ import {
   addInstrument,
   removeInstrument,
   updateInstrumentStatus,
-  queryCandles,
+  queryCandlesAggregated,
   listTrackedInstrumentKeys,
 } from '../modules/market-data'
 
@@ -92,7 +92,11 @@ export async function handleGetCandles(
   const url = new URL(req.url)
   const from = url.searchParams.get('from') ?? '2020-01-01'
   const to = url.searchParams.get('to') ?? new Date().toISOString().slice(0, 10)
-  const candles = queryCandles(inst.instrument_key, from, to)
+  const interval = url.searchParams.get('interval') ?? '1d'
+  if (interval !== '1d' && interval !== '1h' && interval !== '1m') {
+    return Response.json({ error: 'invalid_interval', message: 'interval must be 1d, 1h, or 1m' }, { status: 400 })
+  }
+  const candles = queryCandlesAggregated(inst.instrument_key, from, to, interval)
   return Response.json({ data: candles })
 }
 
