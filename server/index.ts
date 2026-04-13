@@ -59,6 +59,8 @@ import {
 
 // Historical candles (dynamic routes only)
 import { registerHistoricalRoutes } from "./api/historical"
+import { handleListInstruments, handleAddInstrument, registerMarketDataRoutes } from "./api/market-data"
+import { startDownloadWorker } from "./modules/market-data"
 
 // Auth (dynamic route for webhook token)
 import { addDynamicRoute } from "./api/_router"
@@ -69,6 +71,7 @@ const L = withHttpLogging
 registerHistoricalRoutes()
 registerMarketRoutes()
 registerExpiredInstrumentRoutes()
+registerMarketDataRoutes()
 addDynamicRoute("POST", "/api/v1/upstox/auth/webhook-token/:client_id", handleWebhookToken)
 
 Bun.serve({
@@ -156,6 +159,12 @@ Bun.serve({
       DELETE: L((req) => handleUpstoxLogout(req)),  // Upstox-side logout
     },
 
+    // --- Market Data ---
+    "/api/v1/market-data/instruments": {
+      GET: L((req) => handleListInstruments(req)),
+      POST: L((req) => handleAddInstrument(req)),
+    },
+
     // --- Health ---
     "/api/v1/health": {
       GET: L(() => Response.json({ healthy: true })),
@@ -169,3 +178,6 @@ Bun.serve({
 })
 
 console.log(`Server running on http://localhost:${config.port}`)
+
+// Start background download worker for historical candle data
+startDownloadWorker()
