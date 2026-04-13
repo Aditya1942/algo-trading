@@ -1,7 +1,7 @@
 // server/modules/market-data/db.ts
 import defaultDb from '../../shared/db'
 import type { Database } from 'bun:sqlite'
-import type { TrackedInstrument, CandleRow, InstrumentWithStats } from './types'
+import type { TrackedInstrument, CandleRow, InstrumentWithStats, StoredInstrument } from './types'
 
 const TARGET_START = '2020-01-01'
 
@@ -40,6 +40,19 @@ defaultDb.run(`
 defaultDb.run(`
   CREATE INDEX IF NOT EXISTS idx_candles_key_ts
     ON candles(instrument_key, timestamp)
+`)
+
+defaultDb.run(`
+  CREATE TABLE IF NOT EXISTS instruments (
+    instrument_key  TEXT PRIMARY KEY,
+    trading_symbol  TEXT NOT NULL DEFAULT '',
+    name            TEXT NOT NULL DEFAULT '',
+    exchange        TEXT NOT NULL DEFAULT '',
+    instrument_type TEXT NOT NULL DEFAULT '',
+    raw_data        TEXT NOT NULL DEFAULT '{}',
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+  )
 `)
 
 // --- Instrument CRUD ---
@@ -184,6 +197,77 @@ export function listInstrumentsWithStats(db: Database = defaultDb): InstrumentWi
 
     return { ...inst, candle_count, progress_pct }
   })
+}
+
+// --- Instruments cache ---
+
+export function upsertInstruments(
+  instruments: Array<{
+    instrument_key: string
+    trading_symbol: string
+    name: string
+    exchange: string
+    instrument_type: string
+    raw_data: string
+  }>,
+  db: Database = defaultDb,
+): number {
+  if (instruments.length === 0) return 0
+  const stmt = db.prepare(
+    `INSERT INTO instruments (instrument_key, trading_symbol, name, exchange, instrument_type, raw_data, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(instrument_key) DO UPDATE SET
+       trading_symbol = excluded.trading_symbol,
+       name = excluded.name,
+       exchange = excluded.exchange,
+       instrument_type = excluded.instrument_type,
+       raw_data = excluded.raw_data,
+       updated_at = datetime('now')`,
+  )
+  let count = 0
+  const txn = db.transaction(() => {
+    for (const i of instruments) {
+      stmt.run(i.instrument_key, i.trading_symbol, i.name, i.exchange, i.instrument_type, i.raw_data)
+      count++
+    }
+  })
+  txn()
+  return count
+}
+
+export function searchStoredInstruments(
+  search: string,
+  page: number,
+  limit: number,
+  db: Database = defaultDb,
+): { data: StoredInstrument[]; total: number } {
+  const offset = (page - 1) * limit
+  const pattern = `%${search}%`
+
+  if (search.length === 0) {
+    const total = (db.query('SELECT COUNT(*) as cnt FROM instruments').get() as { cnt: number }).cnt
+    const data = db.query(
+      'SELECT * FROM instruments ORDER BY trading_symbol ASC LIMIT ? OFFSET ?',
+    ).all(limit, offset) as StoredInstrument[]
+    return { data, total }
+  }
+
+  const total = (db.query(
+    `SELECT COUNT(*) as cnt FROM instruments
+     WHERE trading_symbol LIKE ? OR name LIKE ? OR instrument_key LIKE ?`,
+  ).get(pattern, pattern, pattern) as { cnt: number }).cnt
+
+  const data = db.query(
+    `SELECT * FROM instruments
+     WHERE trading_symbol LIKE ? OR name LIKE ? OR instrument_key LIKE ?
+     ORDER BY trading_symbol ASC LIMIT ? OFFSET ?`,
+  ).all(pattern, pattern, pattern, limit, offset) as StoredInstrument[]
+
+  return { data, total }
+}
+
+export function countStoredInstruments(db: Database = defaultDb): number {
+  return (db.query('SELECT COUNT(*) as cnt FROM instruments').get() as { cnt: number }).cnt
 }
 
 // --- Next active instrument for worker ---

@@ -29,6 +29,24 @@ export interface InstrumentWithStats extends TrackedInstrument {
   progress_pct: number   // 0-100
 }
 
+export interface StoredInstrument {
+  instrument_key: string
+  trading_symbol: string
+  name: string
+  exchange: string
+  instrument_type: string
+  raw_data: string           // JSON string of full Upstox response
+  created_at: string
+  updated_at: string
+}
+
+export interface StoredInstrumentsPage {
+  data: StoredInstrument[]
+  total: number
+  page: number
+  totalPages: number
+}
+
 export interface UpstoxCandleResponse {
   status: string
   data: {

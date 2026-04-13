@@ -15,6 +15,9 @@ export {
   deleteInstrumentCandles,
   listInstrumentsWithStats,
   getNextActiveInstrument,
+  upsertInstruments,
+  searchStoredInstruments,
+  countStoredInstruments,
 } from './db'
 
 export {
@@ -28,4 +31,6 @@ export type {
   CandleRow,
   InstrumentWithStats,
   UpstoxCandleResponse,
+  StoredInstrument,
+  StoredInstrumentsPage,
 } from './types'

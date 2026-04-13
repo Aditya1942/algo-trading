@@ -35,6 +35,18 @@ function createTestDb(): Database {
     )
   `)
   db.run("CREATE INDEX IF NOT EXISTS idx_candles_key_ts ON candles(instrument_key, timestamp)")
+  db.run(`
+    CREATE TABLE IF NOT EXISTS instruments (
+      instrument_key  TEXT PRIMARY KEY,
+      trading_symbol  TEXT NOT NULL DEFAULT '',
+      name            TEXT NOT NULL DEFAULT '',
+      exchange        TEXT NOT NULL DEFAULT '',
+      instrument_type TEXT NOT NULL DEFAULT '',
+      raw_data        TEXT NOT NULL DEFAULT '{}',
+      created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `)
   return db
 }
 
@@ -54,6 +66,9 @@ import {
   deleteInstrumentCandles,
   listInstrumentsWithStats,
   getNextActiveInstrument,
+  upsertInstruments,
+  searchStoredInstruments,
+  countStoredInstruments,
 } from "./db"
 
 let db: Database
@@ -252,5 +267,74 @@ describe("listInstrumentsWithStats", () => {
     const stats = listInstrumentsWithStats(db)
     expect(stats[0].progress_pct).toBe(0)
     expect(stats[0].candle_count).toBe(0)
+  })
+})
+
+// --- Instruments cache ---
+
+describe("instruments cache", () => {
+  test("upsertInstruments inserts new instruments", () => {
+    const db = createTestDb()
+    const count = upsertInstruments([
+      { instrument_key: "NSE_EQ|INE002A01018", trading_symbol: "RELIANCE", name: "Reliance Industries", exchange: "NSE", instrument_type: "EQUITY", raw_data: "{}" },
+      { instrument_key: "NSE_EQ|INE009A01021", trading_symbol: "INFY", name: "Infosys", exchange: "NSE", instrument_type: "EQUITY", raw_data: "{}" },
+    ], db)
+    expect(count).toBe(2)
+    const { data, total } = searchStoredInstruments("", 1, 50, db)
+    expect(total).toBe(2)
+    expect(data.length).toBe(2)
+  })
+
+  test("upsertInstruments updates existing on conflict", () => {
+    const db = createTestDb()
+    upsertInstruments([
+      { instrument_key: "NSE_EQ|INE002A01018", trading_symbol: "RELIANCE", name: "Old Name", exchange: "NSE", instrument_type: "EQUITY", raw_data: "{}" },
+    ], db)
+    upsertInstruments([
+      { instrument_key: "NSE_EQ|INE002A01018", trading_symbol: "RELIANCE", name: "Reliance Industries", exchange: "NSE", instrument_type: "EQUITY", raw_data: '{"updated":true}' },
+    ], db)
+    const { data, total } = searchStoredInstruments("", 1, 50, db)
+    expect(total).toBe(1)
+    expect(data[0].name).toBe("Reliance Industries")
+  })
+
+  test("searchStoredInstruments filters by search term", () => {
+    const db = createTestDb()
+    upsertInstruments([
+      { instrument_key: "NSE_EQ|INE002A01018", trading_symbol: "RELIANCE", name: "Reliance Industries", exchange: "NSE", instrument_type: "EQUITY", raw_data: "{}" },
+      { instrument_key: "NSE_EQ|INE009A01021", trading_symbol: "INFY", name: "Infosys", exchange: "NSE", instrument_type: "EQUITY", raw_data: "{}" },
+      { instrument_key: "BSE_EQ|INE002A01018", trading_symbol: "RELIANCE", name: "Reliance Industries", exchange: "BSE", instrument_type: "EQUITY", raw_data: "{}" },
+    ], db)
+    const { data, total } = searchStoredInstruments("RELIANCE", 1, 50, db)
+    expect(total).toBe(2)
+    expect(data.every(d => d.trading_symbol === "RELIANCE")).toBe(true)
+  })
+
+  test("searchStoredInstruments paginates correctly", () => {
+    const db = createTestDb()
+    const instruments = Array.from({ length: 25 }, (_, i) => ({
+      instrument_key: `NSE_EQ|KEY${String(i).padStart(3, "0")}`,
+      trading_symbol: `SYM${String(i).padStart(3, "0")}`,
+      name: `Name ${i}`,
+      exchange: "NSE",
+      instrument_type: "EQUITY",
+      raw_data: "{}",
+    }))
+    upsertInstruments(instruments, db)
+    const page1 = searchStoredInstruments("", 1, 10, db)
+    expect(page1.data.length).toBe(10)
+    expect(page1.total).toBe(25)
+    const page3 = searchStoredInstruments("", 3, 10, db)
+    expect(page3.data.length).toBe(5)
+    expect(page3.total).toBe(25)
+  })
+
+  test("countStoredInstruments returns total count", () => {
+    const db = createTestDb()
+    expect(countStoredInstruments(db)).toBe(0)
+    upsertInstruments([
+      { instrument_key: "NSE_EQ|INE002A01018", trading_symbol: "RELIANCE", name: "Reliance", exchange: "NSE", instrument_type: "EQUITY", raw_data: "{}" },
+    ], db)
+    expect(countStoredInstruments(db)).toBe(1)
   })
 })
