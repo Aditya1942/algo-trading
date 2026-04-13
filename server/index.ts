@@ -44,6 +44,7 @@ import { handleGetOptionChain, handleGetOptionContract } from "./api/options"
 
 // Instruments
 import { handleSearchInstruments } from "./api/instruments"
+import { handleGetStoredInstruments, handleGetStoredInstrumentsCount } from "./api/stored-instruments"
 
 // Expired instruments
 import {
@@ -141,6 +142,10 @@ Bun.serve({
 
     // --- Instruments ---
     "/api/v1/upstox/instruments/search": { GET: L((req) => handleSearchInstruments(req)) },
+
+    // --- Stored instruments (local cache) ---
+    "/api/v1/instruments/stored":       { GET: L((req) => handleGetStoredInstruments(req)) },
+    "/api/v1/instruments/stored/count": { GET: L((req) => handleGetStoredInstrumentsCount(req)) },
 
     // --- Expired instruments ---
     "/api/v1/upstox/expired-instruments/expiries":        { GET: L((req) => handleGetExpiries(req)) },
