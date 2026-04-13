@@ -7,7 +7,14 @@ import {
   removeInstrument,
   updateInstrumentStatus,
   queryCandles,
+  listTrackedInstrumentKeys,
 } from '../modules/market-data'
+
+// GET /api/v1/market-data/instruments/keys
+export async function handleGetTrackedKeys(_req: Request): Promise<Response> {
+  const keys = listTrackedInstrumentKeys()
+  return Response.json({ data: keys })
+}
 
 // GET /api/v1/market-data/instruments
 export async function handleListInstruments(_req: Request): Promise<Response> {

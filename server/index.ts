@@ -60,7 +60,7 @@ import {
 
 // Historical candles (dynamic routes only)
 import { registerHistoricalRoutes } from "./api/historical"
-import { handleListInstruments, handleAddInstrument, registerMarketDataRoutes } from "./api/market-data"
+import { handleListInstruments, handleAddInstrument, handleGetTrackedKeys, registerMarketDataRoutes } from "./api/market-data"
 import { startDownloadWorker } from "./modules/market-data"
 
 // Auth (dynamic route for webhook token)
@@ -165,6 +165,9 @@ Bun.serve({
     },
 
     // --- Market Data ---
+    "/api/v1/market-data/instruments/keys": {
+      GET: L((req) => handleGetTrackedKeys(req)),
+    },
     "/api/v1/market-data/instruments": {
       GET: L((req) => handleListInstruments(req)),
       POST: L((req) => handleAddInstrument(req)),
