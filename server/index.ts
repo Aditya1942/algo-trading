@@ -62,6 +62,7 @@ import {
 import { registerHistoricalRoutes } from "./api/historical"
 import { handleListInstruments, handleAddInstrument, handleGetTrackedKeys, registerMarketDataRoutes } from "./api/market-data"
 import { startDownloadWorker } from "./modules/market-data"
+import { handleRunBacktest, handleGetBacktestHistory, handleListStrategies, registerBacktestRoutes } from "./api/backtest"
 
 // Auth (dynamic route for webhook token)
 import { addDynamicRoute } from "./api/_router"
@@ -73,6 +74,7 @@ registerHistoricalRoutes()
 registerMarketRoutes()
 registerExpiredInstrumentRoutes()
 registerMarketDataRoutes()
+registerBacktestRoutes()
 addDynamicRoute("POST", "/api/v1/upstox/auth/webhook-token/:client_id", handleWebhookToken)
 
 Bun.serve({
@@ -171,6 +173,19 @@ Bun.serve({
     "/api/v1/market-data/instruments": {
       GET: L((req) => handleListInstruments(req)),
       POST: L((req) => handleAddInstrument(req)),
+    },
+
+    // --- Backtest ---
+    "/api/v1/backtest/run": {
+      POST: L((req) => handleRunBacktest(req)),
+    },
+    "/api/v1/backtest/history": {
+      GET: L((req) => handleGetBacktestHistory(req)),
+    },
+
+    // --- Strategies ---
+    "/api/v1/strategies": {
+      GET: L((req) => handleListStrategies(req)),
     },
 
     // --- Health ---

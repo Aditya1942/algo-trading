@@ -9,6 +9,7 @@ import { MarketDataPage } from '@/pages/MarketDataPage'
 import { InstrumentsPage } from '@/pages/InstrumentsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { ChartPage } from '@/pages/ChartPage'
+import { BacktestPage } from '@/pages/BacktestPage'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { status } = useAuth()
@@ -89,6 +90,14 @@ function App() {
             element={
               <RequireAuth>
                 <SettingsPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/backtest"
+            element={
+              <RequireAuth>
+                <BacktestPage />
               </RequireAuth>
             }
           />

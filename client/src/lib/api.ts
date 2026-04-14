@@ -290,4 +290,97 @@ export async function getCandles(
   )
 }
 
+// --- Backtest ---
+
+const BACKTEST_API = `${API_V1}/backtest`
+
+export interface BacktestConfig {
+  strategyName: string
+  instrumentKey: string
+  from: string
+  to: string
+  interval: '1d' | '1h' | '1m'
+  initialBalance: number
+  params: Record<string, number>
+}
+
+export interface BacktestTrade {
+  action: 'BUY' | 'SELL'
+  price: number
+  quantity: number
+  timestamp: string
+  reason: string
+  balanceAfter: number
+}
+
+export interface BacktestMetrics {
+  totalPnl: number
+  totalPnlPercent: number
+  winRate: number
+  totalTrades: number
+  avgProfitPerTrade: number
+  maxDrawdown: number
+  maxDrawdownPercent: number
+}
+
+export interface BacktestResult {
+  id?: number
+  config: BacktestConfig
+  trades: BacktestTrade[]
+  metrics: BacktestMetrics
+  equityCurve: { timestamp: string; equity: number }[]
+  createdAt?: string
+}
+
+export interface StrategyInfo {
+  name: string
+  description: string
+  defaultParams: Record<string, number>
+}
+
+export interface BacktestRunSummary {
+  id: number
+  strategy_name: string
+  instrument_key: string
+  total_pnl: number
+  win_rate: number
+  total_trades: number
+  created_at: string
+}
+
+export async function runBacktest(config: BacktestConfig): Promise<BacktestResult> {
+  const res = await fetch(`${BACKTEST_API}/run`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    throw new ApiError(res.status, body)
+  }
+  const json = await res.json()
+  return json.data
+}
+
+export async function getBacktestHistory(): Promise<BacktestRunSummary[]> {
+  const res = await fetch(`${BACKTEST_API}/history`)
+  if (!res.ok) throw new ApiError(res.status, null)
+  const json = await res.json()
+  return json.data
+}
+
+export async function getBacktestResult(id: number): Promise<BacktestResult> {
+  const res = await fetch(`${BACKTEST_API}/history/${id}`)
+  if (!res.ok) throw new ApiError(res.status, null)
+  const json = await res.json()
+  return json.data
+}
+
+export async function getStrategies(): Promise<StrategyInfo[]> {
+  const res = await fetch(`${API_V1}/strategies`)
+  if (!res.ok) throw new ApiError(res.status, null)
+  const json = await res.json()
+  return json.data
+}
+
 export { ApiError }
