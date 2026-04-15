@@ -1,11 +1,9 @@
-export interface BacktestConfig {
-  strategyName: string
-  instrumentKey: string
-  from: string              // ISO date
-  to: string                // ISO date
-  interval: '1d' | '1h' | '1m'
-  initialBalance: number
-  params: Record<string, number>
+import type { RiskLimits, StrategyRunConfig } from '../../shared/contracts/index.ts'
+
+export type BacktestConfig = Omit<StrategyRunConfig, 'fo' | 'risk'> & {
+  mode: 'backtest'
+  risk?: RiskLimits
+  slippagePct?: number
 }
 
 export interface Trade {

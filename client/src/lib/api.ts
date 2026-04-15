@@ -295,6 +295,7 @@ export async function getCandles(
 const BACKTEST_API = `${API_V1}/backtest`
 
 export interface BacktestConfig {
+  mode: 'backtest'
   strategyName: string
   instrumentKey: string
   from: string
@@ -302,6 +303,9 @@ export interface BacktestConfig {
   interval: '1d' | '1h' | '1m'
   initialBalance: number
   params: Record<string, number>
+  risk: RiskLimits
+  fo?: FoContractConfig
+  slippagePct?: number
 }
 
 export interface BacktestTrade {
@@ -336,6 +340,67 @@ export interface StrategyInfo {
   name: string
   description: string
   defaultParams: Record<string, number>
+  paramSpecs?: StrategyParamSpec[]
+  supportedIntervals?: ('1d' | '1h' | '1m')[]
+  supportedModes?: ('backtest' | 'paper' | 'live')[]
+}
+
+export interface StrategyParamSpecOption {
+  label: string
+  value: number
+}
+
+export interface StrategyParamSpec {
+  key: string
+  label: string
+  type: 'number' | 'integer' | 'select'
+  required: boolean
+  defaultValue: number
+  min?: number
+  max?: number
+  step?: number
+  options?: StrategyParamSpecOption[]
+  description?: string
+  group?: string
+}
+
+export interface RiskLimits {
+  maxDailyLossPct: number
+  maxOpenPositions: number
+  maxCapitalPerTradePct: number
+  maxStrategyDrawdownPct: number
+  maxOrdersPerMinute: number
+  killSwitchEnabled: boolean
+}
+
+export const DEFAULT_RISK_LIMITS: RiskLimits = {
+  maxDailyLossPct: 3,
+  maxOpenPositions: 5,
+  maxCapitalPerTradePct: 20,
+  maxStrategyDrawdownPct: 15,
+  maxOrdersPerMinute: 10,
+  killSwitchEnabled: true,
+}
+
+export interface FoContractConfig {
+  underlying: string
+  instrumentType: 'FUT' | 'CE' | 'PE'
+  expiryPolicy: 'current_month' | 'next_month' | 'current_week' | 'next_week'
+  strikeSelection?: 'atm' | 'otm_1' | 'otm_2' | 'itm_1' | 'itm_2'
+  lotMultiplier: number
+}
+
+export interface StrategyRunConfig {
+  mode: 'backtest' | 'paper' | 'live'
+  strategyName: string
+  instrumentKey: string
+  interval: '1d' | '1h' | '1m'
+  from?: string
+  to?: string
+  initialBalance: number
+  params: Record<string, number>
+  risk: RiskLimits
+  fo?: FoContractConfig
 }
 
 export interface BacktestRunSummary {

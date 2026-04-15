@@ -4,6 +4,7 @@ import type { CandleRow } from '../../market-data/types.ts'
 import { insertCandles } from '../../market-data/db.ts'
 import { runBacktest } from '../engine.ts'
 import type { BacktestConfig } from '../types.ts'
+import { DEFAULT_RISK_LIMITS } from '../../../shared/contracts/index.ts'
 
 function createTestDb(): Database {
   const db = new Database(':memory:')
@@ -95,6 +96,7 @@ function makeFlatCandles(count = 20): CandleRow[] {
 }
 
 const baseConfig: BacktestConfig = {
+  mode: 'backtest',
   strategyName: 'sma-crossover',
   instrumentKey: KEY,
   from: '2024-01-01',
@@ -102,6 +104,7 @@ const baseConfig: BacktestConfig = {
   interval: '1m',  // '1m' passes through candles as-is
   initialBalance: 10000,
   params: { fastPeriod: 3, slowPeriod: 5 },
+  risk: DEFAULT_RISK_LIMITS,
 }
 
 describe('runBacktest engine', () => {
@@ -189,7 +192,7 @@ describe('runBacktest engine', () => {
     expect(result.id).toBeGreaterThan(0)
 
     // Verify it's in the db
-    const row = db.query('SELECT id FROM backtest_runs WHERE id = ?').get(result.id) as { id: number } | null
+    const row = db.query('SELECT id FROM backtest_runs WHERE id = ?').get(result.id!) as { id: number } | null
     expect(row).not.toBeNull()
   })
 
@@ -203,5 +206,48 @@ describe('runBacktest engine', () => {
     // Pass db → id is set
     const withDb = await runBacktest({ ...baseConfig, from: '2024-02-01', to: '2024-02-28' }, db)
     expect(withDb.id).toBeDefined()
+  })
+
+  test('risk limits can reject an over-capitalized BUY before execution', async () => {
+    const db = createTestDb()
+    const prices = [100, 100, 100, 100, 100, 200]
+    const candles = prices.map((p, i) => {
+      const day = String(i + 1).padStart(2, '0')
+      return makeCandle(KEY, `2024-04-${day}T09:15:00+05:30`, p)
+    })
+    insertCandles(candles, db)
+
+    const result = await runBacktest({
+      ...baseConfig,
+      from: '2024-04-01',
+      to: '2024-04-30',
+      risk: { ...DEFAULT_RISK_LIMITS, maxCapitalPerTradePct: 1 },
+    }, db)
+
+    expect(result.trades.length).toBe(0)
+    expect(result.metrics.totalTrades).toBe(0)
+  })
+
+  test('slippage changes executed prices while preserving the trade sequence', async () => {
+    const db = createTestDb()
+    const prices = [100, 100, 100, 100, 100, 200]
+    const candles = prices.map((p, i) => {
+      const day = String(i + 1).padStart(2, '0')
+      return makeCandle(KEY, `2024-05-${day}T09:15:00+05:30`, p)
+    })
+    insertCandles(candles, db)
+
+    const result = await runBacktest({
+      ...baseConfig,
+      from: '2024-05-01',
+      to: '2024-05-31',
+      slippagePct: 0.1,
+    }, db)
+
+    expect(result.trades).toHaveLength(2)
+    expect(result.trades[0]!.action).toBe('BUY')
+    expect(result.trades[0]!.price).toBe(220)
+    expect(result.trades[1]!.action).toBe('SELL')
+    expect(result.trades[1]!.price).toBe(180)
   })
 })

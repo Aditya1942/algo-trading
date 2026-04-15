@@ -2,19 +2,80 @@ import { rsi, macd } from "../../indicators/index.ts";
 import { Strategy } from "../base-strategy.ts";
 import type { CandleRow } from "../../market-data/types.ts";
 import type { Signal, StrategyContext } from "../types.ts";
+import type { StrategyParamSpec } from "../../../shared/contracts/index.ts";
 
 export class RsiMacdStrategy extends Strategy {
   name = "rsi-macd";
   description =
     "Combines RSI oversold/overbought levels with MACD histogram crossovers for entry/exit signals.";
-  defaultParams = {
-    rsiPeriod: 14,
-    rsiBuy: 30,
-    rsiSell: 70,
-    macdFast: 12,
-    macdSlow: 26,
-    macdSignal: 9,
-  };
+  paramSpecs: StrategyParamSpec[] = [
+    {
+      key: "rsiPeriod",
+      label: "RSI Period",
+      type: "integer",
+      required: true,
+      defaultValue: 14,
+      min: 2,
+      max: 100,
+      step: 1,
+      group: "RSI",
+    },
+    {
+      key: "rsiBuy",
+      label: "RSI Buy Threshold",
+      type: "integer",
+      required: true,
+      defaultValue: 30,
+      min: 1,
+      max: 50,
+      step: 1,
+      group: "RSI",
+    },
+    {
+      key: "rsiSell",
+      label: "RSI Sell Threshold",
+      type: "integer",
+      required: true,
+      defaultValue: 70,
+      min: 50,
+      max: 99,
+      step: 1,
+      group: "RSI",
+    },
+    {
+      key: "macdFast",
+      label: "MACD Fast Period",
+      type: "integer",
+      required: true,
+      defaultValue: 12,
+      min: 2,
+      max: 100,
+      step: 1,
+      group: "MACD",
+    },
+    {
+      key: "macdSlow",
+      label: "MACD Slow Period",
+      type: "integer",
+      required: true,
+      defaultValue: 26,
+      min: 3,
+      max: 200,
+      step: 1,
+      group: "MACD",
+    },
+    {
+      key: "macdSignal",
+      label: "MACD Signal Period",
+      type: "integer",
+      required: true,
+      defaultValue: 9,
+      min: 1,
+      max: 50,
+      step: 1,
+      group: "MACD",
+    },
+  ];
 
   onStart(_params: Record<string, number>): void {}
   onStop(): void {}

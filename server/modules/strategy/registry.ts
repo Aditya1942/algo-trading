@@ -2,6 +2,7 @@ import { Strategy } from "./base-strategy.ts";
 import { SmaCrossoverStrategy } from "./strategies/sma-crossover.ts";
 import { RsiMacdStrategy } from "./strategies/rsi-macd.ts";
 import { BollingerVolumeStrategy } from "./strategies/bollinger-volume.ts";
+import type { StrategyParamSpec } from "../../shared/contracts/index.ts";
 
 const strategies = new Map<string, new () => Strategy>();
 
@@ -24,6 +25,9 @@ export function listStrategies(): {
   name: string;
   description: string;
   defaultParams: Record<string, number>;
+  paramSpecs: StrategyParamSpec[];
+  supportedIntervals?: ("1d" | "1h" | "1m")[];
+  supportedModes?: ("backtest" | "paper" | "live")[];
 }[] {
   return [...strategies.values()].map((Cls) => {
     const instance = new Cls();
@@ -31,6 +35,9 @@ export function listStrategies(): {
       name: instance.name,
       description: instance.description,
       defaultParams: instance.defaultParams,
+      paramSpecs: instance.paramSpecs,
+      supportedIntervals: instance.supportedIntervals,
+      supportedModes: instance.supportedModes,
     };
   });
 }

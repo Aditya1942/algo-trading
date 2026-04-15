@@ -1,13 +1,37 @@
 // server/api/backtest.ts — HTTP handlers for backtest + strategies
 import { addDynamicRoute } from './_router'
+import type { BacktestConfig } from '../modules/backtest'
 import { runBacktest, listBacktestRuns, getBacktestRun } from '../modules/backtest'
 import { listStrategies } from '../modules/strategy'
+import { validateRunConfig } from '../shared/contracts/index.ts'
+import defaultDb from '../shared/db.ts'
 
 // POST /api/v1/backtest/run
 export async function handleRunBacktest(req: Request): Promise<Response> {
   try {
     const body = await req.json()
-    const result = await runBacktest(body)
+    const validation = validateRunConfig(body)
+    if (!validation.ok) {
+      return Response.json(
+        { error: 'invalid run config', details: validation.errors },
+        { status: 400 },
+      )
+    }
+
+    if (validation.value.mode !== 'backtest') {
+      return Response.json(
+        { error: 'Only backtest mode is supported by this endpoint right now' },
+        { status: 400 },
+      )
+    }
+
+    const backtestValue = validation.value as Extract<typeof validation.value, { mode: 'backtest' }>
+    const { fo: _fo, ...normalizedBacktestConfig } = backtestValue
+    const backtestConfig: BacktestConfig =
+      body && typeof body === 'object' && !Array.isArray(body) && !('risk' in body)
+        ? { ...normalizedBacktestConfig, risk: undefined }
+        : normalizedBacktestConfig
+    const result = await runBacktest(backtestConfig, defaultDb)
     return Response.json({ data: result })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'
@@ -22,7 +46,7 @@ export function handleGetBacktestHistory(_req: Request): Response {
 }
 
 // GET /api/v1/backtest/history/:id (dynamic route)
-export function handleGetBacktestRun(_req: Request, params: Record<string, string>): Response {
+export async function handleGetBacktestRun(_req: Request, params: Record<string, string>): Promise<Response> {
   const id = Number(params.id)
   if (isNaN(id)) {
     return Response.json({ error: 'invalid id' }, { status: 400 })

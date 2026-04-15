@@ -25,6 +25,7 @@ function createTestDb(): Database {
 function makeResult(overrides: Partial<BacktestResult> = {}): BacktestResult {
   return {
     config: {
+      mode: 'backtest',
       strategyName: 'sma-crossover',
       instrumentKey: 'NSE_EQ|TEST',
       from: '2024-01-01',
