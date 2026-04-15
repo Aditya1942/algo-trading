@@ -38,11 +38,13 @@ function EquityChart({ equityCurve }: { equityCurve: { timestamp: string; equity
     })
 
     const series = chart.addSeries(LineSeries, { color: '#22c55e', lineWidth: 2 })
+    // Deduplicate: multiple intraday points share same date — keep last per day
+    const byDay = new Map<string, number>()
+    for (const p of equityCurve) {
+      byDay.set(p.timestamp.slice(0, 10), p.equity)
+    }
     series.setData(
-      equityCurve.map((p) => ({
-        time: p.timestamp.slice(0, 10),
-        value: p.equity,
-      })),
+      Array.from(byDay, ([time, value]) => ({ time, value })),
     )
     chart.timeScale().fitContent()
 
