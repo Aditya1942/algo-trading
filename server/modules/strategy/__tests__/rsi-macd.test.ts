@@ -120,5 +120,8 @@ describe("RsiMacdStrategy", () => {
     expect(s.defaultParams.macdFast).toBe(12);
     expect(s.defaultParams.macdSlow).toBe(26);
     expect(s.defaultParams.macdSignal).toBe(9);
+    expect(s.paramSpecs).toHaveLength(6);
+    expect(s.paramSpecs.map((spec) => spec.group)).toContain("RSI");
+    expect(s.paramSpecs.map((spec) => spec.group)).toContain("MACD");
   });
 });

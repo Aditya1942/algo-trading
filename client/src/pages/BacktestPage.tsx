@@ -1,20 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { createChart, LineSeries, ColorType } from 'lightweight-charts'
-import { FlaskConical, ChevronDown, ChevronUp, TrendingUp, TrendingDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { AppShell } from '@/components/layout/AppShell'
+import { RunConfigForm } from '@/components/RunConfigForm'
 import {
-  useStrategiesQuery,
-  useRunBacktestMutation,
   useBacktestHistoryQuery,
   useBacktestResultQuery,
 } from '@/lib/backtest-queries'
-import { useTrackedInstrumentsQuery } from '@/lib/market-data-queries'
-import type { BacktestConfig, BacktestResult, BacktestRunSummary } from '@/lib/api'
+import type { BacktestResult, BacktestRunSummary } from '@/lib/api'
 
 /* ── Equity Chart ──────────────────────────────────────────────────── */
 
@@ -38,11 +34,13 @@ function EquityChart({ equityCurve }: { equityCurve: { timestamp: string; equity
     })
 
     const series = chart.addSeries(LineSeries, { color: '#22c55e', lineWidth: 2 })
+    // Deduplicate: multiple intraday points share same date — keep last per day
+    const byDay = new Map<string, number>()
+    for (const p of equityCurve) {
+      byDay.set(p.timestamp.slice(0, 10), p.equity)
+    }
     series.setData(
-      equityCurve.map((p) => ({
-        time: p.timestamp.slice(0, 10),
-        value: p.equity,
-      })),
+      Array.from(byDay, ([time, value]) => ({ time, value })),
     )
     chart.timeScale().fitContent()
 
@@ -284,262 +282,6 @@ function HistoryPanel({
   )
 }
 
-/* ── Config Form ───────────────────────────────────────────────────── */
-
-const TODAY = new Date().toISOString().slice(0, 10)
-const ONE_YEAR_AGO = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-
-function ConfigForm({ onResult }: { onResult: (r: BacktestResult) => void }) {
-  const { data: strategies = [], isPending: strategiesLoading } = useStrategiesQuery()
-  const { data: instruments = [], isPending: instrumentsLoading } = useTrackedInstrumentsQuery()
-  const runMutation = useRunBacktestMutation()
-
-  const [collapsed, setCollapsed] = useState(false)
-  const [strategyName, setStrategyName] = useState('')
-  const [instrumentKey, setInstrumentKey] = useState('')
-  const [from, setFrom] = useState(ONE_YEAR_AGO)
-  const [to, setTo] = useState(TODAY)
-  const [interval, setIntervalVal] = useState<'1d' | '1h' | '1m'>('1d')
-  const [initialBalance, setInitialBalance] = useState(100000)
-  const [params, setParams] = useState<Record<string, number>>({})
-
-  // When strategy changes, populate default params
-  useEffect(() => {
-    if (!strategyName) return
-    const strategy = strategies.find((s) => s.name === strategyName)
-    if (strategy) {
-      setParams({ ...strategy.defaultParams })
-    }
-  }, [strategyName, strategies])
-
-  // Auto-select first strategy and instrument when data loads
-  useEffect(() => {
-    if (strategies.length > 0 && !strategyName) {
-      setStrategyName(strategies[0].name)
-    }
-  }, [strategies, strategyName])
-
-  useEffect(() => {
-    if (instruments.length > 0 && !instrumentKey) {
-      setInstrumentKey(instruments[0].instrument_key)
-    }
-  }, [instruments, instrumentKey])
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!strategyName || !instrumentKey) return
-
-    const config: BacktestConfig = {
-      strategyName,
-      instrumentKey,
-      from,
-      to,
-      interval,
-      initialBalance,
-      params,
-    }
-
-    runMutation.mutate(config, {
-      onSuccess: (result) => {
-        onResult(result)
-        setCollapsed(true)
-      },
-    })
-  }
-
-  const selectedStrategy = strategies.find((s) => s.name === strategyName)
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <FlaskConical className="h-4 w-4" />
-            Configuration
-          </CardTitle>
-          <button
-            type="button"
-            onClick={() => setCollapsed((c) => !c)}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          </button>
-        </div>
-      </CardHeader>
-
-      {!collapsed && (
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Strategy */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium" htmlFor="strategy-select">
-                  Strategy
-                </label>
-                {strategiesLoading ? (
-                  <Skeleton className="h-9 w-full" />
-                ) : (
-                  <select
-                    id="strategy-select"
-                    value={strategyName}
-                    onChange={(e) => setStrategyName(e.target.value)}
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="" disabled>
-                      Select strategy...
-                    </option>
-                    {strategies.map((s) => (
-                      <option key={s.name} value={s.name}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {selectedStrategy?.description && (
-                  <p className="text-xs text-muted-foreground">{selectedStrategy.description}</p>
-                )}
-              </div>
-
-              {/* Instrument */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium" htmlFor="instrument-select">
-                  Instrument
-                </label>
-                {instrumentsLoading ? (
-                  <Skeleton className="h-9 w-full" />
-                ) : instruments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No tracked instruments. Add one in Market Data first.
-                  </p>
-                ) : (
-                  <select
-                    id="instrument-select"
-                    value={instrumentKey}
-                    onChange={(e) => setInstrumentKey(e.target.value)}
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="" disabled>
-                      Select instrument...
-                    </option>
-                    {instruments.map((inst) => (
-                      <option key={inst.instrument_key} value={inst.instrument_key}>
-                        {inst.name || inst.instrument_key} ({inst.exchange})
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              {/* From */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium" htmlFor="from-date">
-                  From
-                </label>
-                <Input
-                  id="from-date"
-                  type="date"
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                />
-              </div>
-
-              {/* To */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium" htmlFor="to-date">
-                  To
-                </label>
-                <Input
-                  id="to-date"
-                  type="date"
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                />
-              </div>
-
-              {/* Initial Balance */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium" htmlFor="initial-balance">
-                  Initial Balance (₹)
-                </label>
-                <Input
-                  id="initial-balance"
-                  type="number"
-                  min={1000}
-                  step={1000}
-                  value={initialBalance}
-                  onChange={(e) => setInitialBalance(Number(e.target.value))}
-                />
-              </div>
-            </div>
-
-            {/* Interval */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Interval</label>
-              <div className="flex gap-2">
-                {(['1d', '1h', '1m'] as const).map((iv) => (
-                  <button
-                    key={iv}
-                    type="button"
-                    onClick={() => setIntervalVal(iv)}
-                    className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                      iv === interval
-                        ? 'bg-blue-900/50 text-blue-400 border border-blue-500'
-                        : 'bg-zinc-800 text-zinc-500 hover:text-zinc-300 border border-transparent'
-                    }`}
-                  >
-                    {iv === '1d' ? 'Daily' : iv === '1h' ? 'Hourly' : '1 Min'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Dynamic strategy params */}
-            {Object.keys(params).length > 0 && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Strategy Parameters</label>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  {Object.entries(params).map(([key, val]) => (
-                    <div key={key} className="space-y-1">
-                      <label className="text-xs text-muted-foreground" htmlFor={`param-${key}`}>
-                        {key}
-                      </label>
-                      <Input
-                        id={`param-${key}`}
-                        type="number"
-                        step="any"
-                        value={val}
-                        onChange={(e) =>
-                          setParams((prev) => ({ ...prev, [key]: Number(e.target.value) }))
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {runMutation.isError && (
-              <p className="text-sm text-destructive">
-                {(runMutation.error as Error)?.message ?? 'Backtest failed'}
-              </p>
-            )}
-
-            <Button
-              type="submit"
-              disabled={runMutation.isPending || !strategyName || !instrumentKey}
-              className="w-full sm:w-auto"
-            >
-              {runMutation.isPending ? 'Running...' : 'Run Backtest'}
-            </Button>
-          </form>
-        </CardContent>
-      )}
-    </Card>
-  )
-}
-
 /* ── HistoryResultLoader ───────────────────────────────────────────── */
 
 function HistoryResultLoader({
@@ -584,7 +326,7 @@ export function BacktestPage() {
         <h2 className="text-2xl font-bold">Backtest</h2>
 
         {/* Config form */}
-        <ConfigForm onResult={setCurrentResult} />
+        <RunConfigForm onResult={setCurrentResult} />
 
         {/* Load historical result if selected */}
         {selectedHistoryId !== null && (

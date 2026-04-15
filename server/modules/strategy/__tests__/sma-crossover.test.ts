@@ -132,5 +132,8 @@ describe("SmaCrossoverStrategy", () => {
     expect(s.name).toBe("sma-crossover");
     expect(s.defaultParams.fastPeriod).toBe(10);
     expect(s.defaultParams.slowPeriod).toBe(50);
+    expect(s.paramSpecs).toHaveLength(2);
+    expect(s.paramSpecs[0]!.key).toBe("fastPeriod");
+    expect(s.paramSpecs[0]!.type).toBe("integer");
   });
 });

@@ -86,8 +86,10 @@ export function CandlestickChart({
   const hasFitRef = useRef(false)
 
   // Keep callback refs fresh
-  onLoadMoreRef.current = onLoadMore
-  onCrosshairMoveRef.current = onCrosshairMove
+  useEffect(() => {
+    onLoadMoreRef.current = onLoadMore
+    onCrosshairMoveRef.current = onCrosshairMove
+  }, [onLoadMore, onCrosshairMove])
 
   // Create / recreate chart when interval changes (time format differs between daily and intraday)
   useEffect(() => {
@@ -230,7 +232,7 @@ export function CandlestickChart({
       <div className="flex h-full w-full flex-col items-center justify-center rounded-lg bg-[#0a0a0a]">
         <div className="flex w-3/4 items-end gap-1" style={{ height: '60%' }}>
           {Array.from({ length: 40 }, (_, i) => {
-            const h = 20 + Math.sin(i * 0.5) * 15 + Math.random() * 25
+            const h = 20 + Math.sin(i * 0.5) * 15 + ((i * 11) % 7) * 3
             return (
               <div
                 key={i}

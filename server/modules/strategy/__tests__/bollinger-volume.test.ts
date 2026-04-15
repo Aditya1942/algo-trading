@@ -163,5 +163,11 @@ describe("BollingerVolumeStrategy", () => {
     expect(s.defaultParams.bbPeriod).toBe(20);
     expect(s.defaultParams.bbStdDev).toBe(2);
     expect(s.defaultParams.volumeMultiplier).toBe(1.5);
+    expect(s.paramSpecs).toHaveLength(3);
+    expect(s.paramSpecs.map((spec) => spec.key)).toEqual([
+      "bbPeriod",
+      "bbStdDev",
+      "volumeMultiplier",
+    ]);
   });
 });

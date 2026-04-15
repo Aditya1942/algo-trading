@@ -44,6 +44,7 @@ describe("Strategy Registry", () => {
       expect(typeof entry.name).toBe("string");
       expect(typeof entry.description).toBe("string");
       expect(typeof entry.defaultParams).toBe("object");
+      expect(Array.isArray(entry.paramSpecs)).toBe(true);
     }
   });
 
@@ -51,7 +52,15 @@ describe("Strategy Registry", () => {
     class TestStrategy extends Strategy {
       name = "test-strategy-unique";
       description = "A test strategy";
-      defaultParams = { foo: 1 };
+      paramSpecs = [
+        {
+          key: "foo",
+          label: "Foo",
+          type: "integer" as const,
+          required: true,
+          defaultValue: 1,
+        },
+      ];
       onCandle(_candle: CandleRow, _ctx: StrategyContext): Signal | null {
         return null;
       }
@@ -69,11 +78,20 @@ describe("Strategy Registry", () => {
     const s = getStrategy("rsi-macd");
     expect(s.defaultParams.rsiPeriod).toBe(14);
     expect(s.defaultParams.macdFast).toBe(12);
+    expect(s.paramSpecs.length).toBe(6);
   });
 
   test("getStrategy returns bollinger-volume with correct default params", () => {
     const s = getStrategy("bollinger-volume");
     expect(s.defaultParams.bbPeriod).toBe(20);
     expect(s.defaultParams.volumeMultiplier).toBe(1.5);
+    expect(s.paramSpecs.length).toBe(3);
+  });
+
+  test("listStrategies exposes paramSpecs with backward-compatible defaults", () => {
+    const sma = listStrategies().find((entry) => entry.name === "sma-crossover");
+    expect(sma).toBeDefined();
+    expect(sma!.paramSpecs.map((spec) => spec.key)).toEqual(["fastPeriod", "slowPeriod"]);
+    expect(sma!.defaultParams).toEqual({ fastPeriod: 10, slowPeriod: 50 });
   });
 });

@@ -1,4 +1,5 @@
 import type { CandleRow } from "../market-data/types.ts";
+import type { RiskLimits } from "../../shared/contracts/index.ts";
 
 export type { CandleRow };
 
@@ -19,4 +20,8 @@ export interface StrategyContext {
   position: Position | null; // current open position (if any)
   candles: CandleRow[]; // historical window for indicator calc
   params: Record<string, number>; // tunable params
+  mode?: "backtest" | "paper" | "live";
+  balance?: number;
+  initialBalance?: number;
+  riskLimits?: RiskLimits;
 }

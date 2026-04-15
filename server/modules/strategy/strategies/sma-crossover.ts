@@ -2,11 +2,35 @@ import { sma } from "../../indicators/index.ts";
 import { Strategy } from "../base-strategy.ts";
 import type { CandleRow } from "../../market-data/types.ts";
 import type { Signal, StrategyContext } from "../types.ts";
+import type { StrategyParamSpec } from "../../../shared/contracts/index.ts";
 
 export class SmaCrossoverStrategy extends Strategy {
   name = "sma-crossover";
   description = "Trades SMA fast/slow crossovers. BUY on golden cross, SELL on death cross.";
-  defaultParams = { fastPeriod: 10, slowPeriod: 50 };
+  paramSpecs: StrategyParamSpec[] = [
+    {
+      key: "fastPeriod",
+      label: "Fast Period",
+      type: "integer",
+      required: true,
+      defaultValue: 10,
+      min: 2,
+      max: 200,
+      step: 1,
+      group: "SMA",
+    },
+    {
+      key: "slowPeriod",
+      label: "Slow Period",
+      type: "integer",
+      required: true,
+      defaultValue: 50,
+      min: 5,
+      max: 500,
+      step: 1,
+      group: "SMA",
+    },
+  ];
 
   onStart(_params: Record<string, number>): void {}
   onStop(): void {}
