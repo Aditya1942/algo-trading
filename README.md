@@ -242,16 +242,6 @@ Planned and in-progress themes (from internal plans and code comments):
 
 ---
 
-## Star history
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Aditya1942/algo-trading&type=Date&theme=dark" />
-  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Aditya1942/algo-trading&type=Date" />
-  <img alt="Star history chart" src="https://api.star-history.com/svg?repos=Aditya1942/algo-trading&type=Date" />
-</picture>
-
----
-
 ## Acknowledgments
 
 - [Upstox](https://upstox.com/) for broker APIs  
