@@ -2,7 +2,7 @@
 import { addDynamicRoute } from './_router'
 import type { BacktestConfig } from '../modules/backtest'
 import { runBacktest, listBacktestRuns, getBacktestRun } from '../modules/backtest'
-import { listStrategies } from '../modules/strategy'
+import { listStrategies, listCustom } from '../modules/strategy'
 import { validateRunConfig } from '../shared/contracts/index.ts'
 import defaultDb from '../shared/db.ts'
 
@@ -58,8 +58,19 @@ export async function handleGetBacktestRun(_req: Request, params: Record<string,
 
 // GET /api/v1/strategies
 export function handleListStrategies(_req: Request): Response {
-  const strategies = listStrategies()
-  return Response.json({ data: strategies })
+  const builtins = listStrategies().map((s) => ({ ...s, kind: 'builtin' as const }))
+  const custom = listCustom().map((row) => ({
+    name: `custom:${row.id}`,
+    description: row.description,
+    defaultParams: Object.fromEntries(row.paramSpecs.map((s) => [s.key, s.defaultValue])),
+    paramSpecs: row.paramSpecs,
+    supportedIntervals: row.supportedIntervals,
+    supportedModes: ['backtest'] as ('backtest' | 'paper' | 'live')[],
+    kind: 'custom' as const,
+    id: row.id,
+    displayName: row.name,
+  }))
+  return Response.json({ data: [...builtins, ...custom] })
 }
 
 // Register dynamic (parameterized) routes

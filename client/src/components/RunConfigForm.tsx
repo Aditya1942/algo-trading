@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useMemo,
   useState,
   type Dispatch,
@@ -6,6 +7,7 @@ import {
   type ReactNode,
   type SetStateAction,
 } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ChevronDown, ChevronUp, FlaskConical, Shield, Workflow } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -209,9 +211,31 @@ export function RunConfigForm({ onResult }: { onResult: (result: BacktestResult)
   const { data: instruments = [], isPending: instrumentsLoading } = useTrackedInstrumentsQuery()
   const runMutation = useRunBacktestMutation()
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  const preselectStrategy = searchParams.get('strategyName') ?? ''
+
   const [collapsed, setCollapsed] = useState(false)
   const [mode, setMode] = useState<'backtest' | 'paper' | 'live'>('backtest')
-  const [strategyName, setStrategyName] = useState('')
+  const [strategyName, setStrategyName] = useState(preselectStrategy)
+
+  useEffect(() => {
+    if (!preselectStrategy || strategies.length === 0) return
+    const match = strategies.find((s) => s.name === preselectStrategy)
+    if (match) {
+      setStrategyName(match.name)
+      setParams({ ...match.defaultParams })
+      if (match.supportedIntervals && !match.supportedIntervals.includes(interval)) {
+        setIntervalVal(match.supportedIntervals[0]!)
+      }
+      if (match.supportedModes && !match.supportedModes.includes(mode)) {
+        setMode(match.supportedModes[0]!)
+      }
+    }
+    const next = new URLSearchParams(searchParams)
+    next.delete('strategyName')
+    setSearchParams(next, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [strategies, preselectStrategy])
   const [instrumentKey, setInstrumentKey] = useState('')
   const [from, setFrom] = useState(ONE_YEAR_AGO)
   const [to, setTo] = useState(TODAY)
@@ -391,7 +415,9 @@ export function RunConfigForm({ onResult }: { onResult: (result: BacktestResult)
                     </option>
                     {strategies.map((strategy) => (
                       <option key={strategy.name} value={strategy.name}>
-                        {strategy.name}
+                        {strategy.kind === 'custom'
+                          ? `${strategy.displayName ?? strategy.name} (custom)`
+                          : strategy.name}
                       </option>
                     ))}
                   </select>
