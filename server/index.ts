@@ -63,6 +63,11 @@ import { registerHistoricalRoutes } from "./api/historical"
 import { handleListInstruments, handleAddInstrument, handleGetTrackedKeys, registerMarketDataRoutes } from "./api/market-data"
 import { startDownloadWorker } from "./modules/market-data"
 import { handleRunBacktest, handleGetBacktestHistory, handleListStrategies, registerBacktestRoutes } from "./api/backtest"
+import {
+  handleListCustomStrategies,
+  handleCreateCustomStrategy,
+  registerCustomStrategyRoutes,
+} from "./api/custom-strategies"
 
 // Auth (dynamic route for webhook token)
 import { addDynamicRoute } from "./api/_router"
@@ -75,6 +80,7 @@ registerMarketRoutes()
 registerExpiredInstrumentRoutes()
 registerMarketDataRoutes()
 registerBacktestRoutes()
+registerCustomStrategyRoutes()
 addDynamicRoute("POST", "/api/v1/upstox/auth/webhook-token/:client_id", handleWebhookToken)
 
 Bun.serve({
@@ -186,6 +192,12 @@ Bun.serve({
     // --- Strategies ---
     "/api/v1/strategies": {
       GET: L((req) => handleListStrategies(req)),
+    },
+
+    // --- Custom Strategies ---
+    "/api/v1/custom-strategies": {
+      GET: L((req) => handleListCustomStrategies(req)),
+      POST: L((req) => handleCreateCustomStrategy(req)),
     },
 
     // --- Health ---

@@ -10,6 +10,7 @@ import { InstrumentsPage } from '@/pages/InstrumentsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { ChartPage } from '@/pages/ChartPage'
 import { BacktestPage } from '@/pages/BacktestPage'
+import { StrategyBuilderPage } from '@/pages/StrategyBuilderPage'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { status } = useAuth()
@@ -98,6 +99,14 @@ function App() {
             element={
               <RequireAuth>
                 <BacktestPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/strategy-builder"
+            element={
+              <RequireAuth>
+                <StrategyBuilderPage />
               </RequireAuth>
             }
           />

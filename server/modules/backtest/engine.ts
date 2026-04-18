@@ -3,7 +3,7 @@ import type { BacktestConfig, BacktestResult, Trade } from './types.ts'
 import { calculateMetrics } from './metrics.ts'
 import { saveBacktestRun } from './db.ts'
 import { queryCandlesAggregated } from '../market-data/db.ts'
-import { getStrategy, type Position, type Signal } from '../strategy/index.ts'
+import { resolveStrategy, type Position, type Signal } from '../strategy/index.ts'
 import {
   BacktestExecutor,
   completeStrategyRun,
@@ -118,7 +118,7 @@ export async function runBacktest(config: BacktestConfig, db?: Database): Promis
     db,
   )
 
-  const strategy = getStrategy(config.strategyName)
+  const strategy = resolveStrategy(config.strategyName)
   const strategyRunId = db ? createStrategyRun(config, db) : undefined
   const persistedOrders: PersistedOrder[] = []
   const riskEvents: Array<{
@@ -129,7 +129,7 @@ export async function runBacktest(config: BacktestConfig, db?: Database): Promis
     riskState: RiskState
   }> = []
 
-  strategy.onStart(config.params)
+  await strategy.onStart(config.params)
 
   try {
     let balance = config.initialBalance
@@ -163,7 +163,7 @@ export async function runBacktest(config: BacktestConfig, db?: Database): Promis
         lastMinuteBucket = minuteBucket
       }
 
-      const signal = strategy.onCandle(candle, ctx)
+      const signal = await strategy.onCandle(candle, ctx)
 
       if (signal) {
         const executableSignal = getExecutableSignal(signal, candle.close, balance, position)
@@ -388,6 +388,6 @@ export async function runBacktest(config: BacktestConfig, db?: Database): Promis
     }
     throw error
   } finally {
-    strategy.onStop()
+    await strategy.onStop()
   }
 }

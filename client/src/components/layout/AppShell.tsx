@@ -2,13 +2,13 @@ import type { ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
-  LineChart,
   Settings,
   Briefcase,
   History,
   Database,
   Search,
   FlaskConical,
+  Code2,
 } from 'lucide-react'
 
 import {
@@ -108,12 +108,12 @@ export function AppShell({ title = 'Algo Trading', children }: AppShellProps) {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    tooltip="Strategies"
-                    isActive={path === '/backtest'}
-                    onClick={() => navigate('/backtest')}
+                    tooltip="Strategy Builder"
+                    isActive={path === '/strategy-builder'}
+                    onClick={() => navigate('/strategy-builder')}
                   >
-                    <LineChart />
-                    <span>Strategies</span>
+                    <Code2 />
+                    <span>Strategy Builder</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>

@@ -343,6 +343,28 @@ export interface StrategyInfo {
   paramSpecs?: StrategyParamSpec[]
   supportedIntervals?: ('1d' | '1h' | '1m')[]
   supportedModes?: ('backtest' | 'paper' | 'live')[]
+  kind?: 'builtin' | 'custom'
+  id?: number
+  displayName?: string
+}
+
+export interface CustomStrategy {
+  id: number
+  name: string
+  description: string
+  code: string
+  paramSpecs: StrategyParamSpec[]
+  supportedIntervals: ('1d' | '1h' | '1m')[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CustomStrategyInput {
+  name: string
+  description?: string
+  code: string
+  paramSpecs?: StrategyParamSpec[]
+  supportedIntervals?: ('1d' | '1h' | '1m')[]
 }
 
 export interface StrategyParamSpecOption {
@@ -443,6 +465,71 @@ export async function getBacktestResult(id: number): Promise<BacktestResult> {
 
 export async function getStrategies(): Promise<StrategyInfo[]> {
   const res = await fetch(`${API_V1}/strategies`)
+  if (!res.ok) throw new ApiError(res.status, null)
+  const json = await res.json()
+  return json.data
+}
+
+const CUSTOM_API = `${API_V1}/custom-strategies`
+
+export async function listCustomStrategies(): Promise<CustomStrategy[]> {
+  const res = await fetch(CUSTOM_API)
+  if (!res.ok) throw new ApiError(res.status, null)
+  const json = await res.json()
+  return json.data
+}
+
+export async function getCustomStrategy(id: number): Promise<CustomStrategy> {
+  const res = await fetch(`${CUSTOM_API}/${id}`)
+  if (!res.ok) throw new ApiError(res.status, null)
+  const json = await res.json()
+  return json.data
+}
+
+export async function createCustomStrategy(input: CustomStrategyInput): Promise<CustomStrategy> {
+  const res = await fetch(CUSTOM_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    throw new ApiError(res.status, body)
+  }
+  const json = await res.json()
+  return json.data
+}
+
+export async function updateCustomStrategy(
+  id: number,
+  patch: Partial<CustomStrategyInput>,
+): Promise<CustomStrategy> {
+  const res = await fetch(`${CUSTOM_API}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    throw new ApiError(res.status, body)
+  }
+  const json = await res.json()
+  return json.data
+}
+
+export async function deleteCustomStrategy(id: number): Promise<void> {
+  const res = await fetch(`${CUSTOM_API}/${id}`, { method: 'DELETE' })
+  if (!res.ok) throw new ApiError(res.status, null)
+}
+
+export interface ValidateResult {
+  ok: boolean
+  error?: string
+  logs?: string[]
+}
+
+export async function validateCustomStrategy(id: number): Promise<ValidateResult> {
+  const res = await fetch(`${CUSTOM_API}/${id}/validate`, { method: 'POST' })
   if (!res.ok) throw new ApiError(res.status, null)
   const json = await res.json()
   return json.data

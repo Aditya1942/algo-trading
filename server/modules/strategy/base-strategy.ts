@@ -13,7 +13,10 @@ export abstract class Strategy {
     return Object.fromEntries(this.paramSpecs.map((spec) => [spec.key, spec.defaultValue]));
   }
 
-  abstract onCandle(candle: CandleRow, ctx: StrategyContext): Signal | null;
-  abstract onStart(params: Record<string, number>): void;
-  abstract onStop(): void;
+  abstract onCandle(
+    candle: CandleRow,
+    ctx: StrategyContext,
+  ): Signal | null | Promise<Signal | null>;
+  abstract onStart(params: Record<string, number>): void | Promise<void>;
+  abstract onStop(): void | Promise<void>;
 }
