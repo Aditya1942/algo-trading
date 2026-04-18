@@ -10,3 +10,5 @@ node_modules/
 *.db-journal
 dist/
 .DS_Store
+.cursor/
+.superpowers/
